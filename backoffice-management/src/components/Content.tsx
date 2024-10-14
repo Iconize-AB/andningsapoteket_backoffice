@@ -41,6 +41,7 @@ interface NewSession {
   title: string;
   description: string;
   category: string;
+  categories: string;
   file: File | null;
 }
 
@@ -79,6 +80,7 @@ const Content: React.FC = () => {
     title: "",
     description: "",
     category: "",
+    categories: "",
     file: null,
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -164,6 +166,9 @@ const Content: React.FC = () => {
       formData.append('title', newSession.title);
       formData.append('description', newSession.description);
       formData.append('category', newSession.category);
+      // Parse categories into an array
+      const categoriesArray = newSession.categories.split(',').map(cat => cat.trim());
+      formData.append('categories', JSON.stringify(categoriesArray));
       if (newSession.file) {
         formData.append('file', newSession.file);
       }
@@ -184,7 +189,7 @@ const Content: React.FC = () => {
       console.log("Session uploaded successfully:", result);
 
       // Reset form and refresh sessions list
-      setNewSession({ title: '', description: '', category: '', file: null });
+      setNewSession({ title: '', description: '', category: '', categories: '', file: null });
       fetchSessions();
       setTabValue(0); // Switch back to the sessions overview tab
     } catch (error) {
@@ -256,7 +261,6 @@ const Content: React.FC = () => {
     }
   };
 
-  const categories = ['fire', 'earth', 'water', 'wind'];
 
   if (loading) {
     return <CircularProgress />;
@@ -416,20 +420,30 @@ const Content: React.FC = () => {
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>Main Category</InputLabel>
                 <Select
                   value={newSession.category}
                   onChange={handleCategoryChange}
                   name="category"
                   required
                 >
-                  {categories.map((category) => (
+                  {['Fire', 'Earth', 'Water', 'Wind'].map((category) => (
                     <MenuItem key={category} value={category}>
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Additional Categories"
+                name="categories"
+                value={newSession.categories}
+                onChange={handleInputChange}
+                helperText="Enter categories separated by commas"
+              />
             </Grid>
             <Grid item xs={12}>
               <input
