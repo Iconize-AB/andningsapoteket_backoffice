@@ -28,6 +28,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface Session {
   id: string;
@@ -42,7 +43,9 @@ interface NewSession {
   description: string;
   category: string;
   categories: string;
-  file: File | null;
+  audio: File | null;
+  image: File | null;
+  duration: string;
 }
 
 interface GroupedSessions {
@@ -81,7 +84,9 @@ const Content: React.FC = () => {
     description: "",
     category: "",
     categories: "",
-    file: null,
+    audio: null,
+    image: null,
+    duration: "",
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -147,9 +152,37 @@ const Content: React.FC = () => {
     setNewSession({ ...newSession, category: event.target.value });
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const getAudioDuration = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContext.decodeAudioData(e.target?.result as ArrayBuffer, (buffer) => {
+          const durationInSeconds = buffer.duration;
+          const minutes = Math.floor(durationInSeconds / 60);
+          const seconds = Math.round(durationInSeconds % 60);
+          resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+        }, (err) => reject(err));
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, fileType: 'audio' | 'image') => {
     if (event.target.files && event.target.files[0]) {
-      setNewSession({ ...newSession, file: event.target.files[0] });
+      const file = event.target.files[0];
+      if (fileType === 'audio') {
+        try {
+          const duration = await getAudioDuration(file);
+          setNewSession({ ...newSession, audio: file, duration });
+        } catch (error) {
+          console.error("Error getting audio duration:", error);
+          setNewSession({ ...newSession, audio: file, duration: "" });
+        }
+      } else {
+        setNewSession({ ...newSession, [fileType]: file });
+      }
     }
   };
 
@@ -166,11 +199,14 @@ const Content: React.FC = () => {
       formData.append('title', newSession.title);
       formData.append('description', newSession.description);
       formData.append('category', newSession.category);
-      // Parse categories into an array
       const categoriesArray = newSession.categories.split(',').map(cat => cat.trim());
       formData.append('categories', JSON.stringify(categoriesArray));
-      if (newSession.file) {
-        formData.append('file', newSession.file);
+      formData.append('duration', newSession.duration);
+      if (newSession.audio) {
+        formData.append('audio', newSession.audio);
+      }
+      if (newSession.image) {
+        formData.append('image', newSession.image);
       }
 
       const response = await fetch("http://localhost:3000/v1/sessions/upload", {
@@ -189,7 +225,7 @@ const Content: React.FC = () => {
       console.log("Session uploaded successfully:", result);
 
       // Reset form and refresh sessions list
-      setNewSession({ title: '', description: '', category: '', categories: '', file: null });
+      setNewSession({ title: '', description: '', category: '', categories: '', audio: null, image: null, duration: '' });
       fetchSessions();
       setTabValue(0); // Switch back to the sessions overview tab
     } catch (error) {
@@ -447,19 +483,36 @@ const Content: React.FC = () => {
             </Grid>
             <Grid item xs={12}>
               <input
-                accept="audio/*,video/*"
+                accept="audio/*"
                 style={{ display: "none" }}
-                id="raised-button-file"
+                id="audio-file-upload"
                 type="file"
-                onChange={handleFileChange}
+                onChange={(e) => handleFileChange(e, 'audio')}
               />
-              <label htmlFor="raised-button-file">
-                <Button variant="contained" component="span">
-                  Upload File
+              <label htmlFor="audio-file-upload">
+                <Button variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                  Upload Audio
                 </Button>
               </label>
-              {newSession.file && (
-                <Typography>{newSession.file.name}</Typography>
+              {newSession.audio && (
+                <Typography>{newSession.audio.name}</Typography>
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="image-file-upload"
+                type="file"
+                onChange={(e) => handleFileChange(e, 'image')}
+              />
+              <label htmlFor="image-file-upload">
+                <Button variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                  Upload Image
+                </Button>
+              </label>
+              {newSession.image && (
+                <Typography>{newSession.image.name}</Typography>
               )}
             </Grid>
             <Grid item xs={12}>
