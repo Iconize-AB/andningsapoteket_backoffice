@@ -28,6 +28,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface Session {
@@ -91,6 +92,7 @@ const Content: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   useEffect(() => {
     fetchSessions();
@@ -297,6 +299,45 @@ const Content: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedSession) return;
+
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(`http://localhost:3000/v1/sessions/delete/${selectedSession.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete session");
+      }
+
+      // Remove the deleted session from the state
+      setSessions(prevSessions => ({
+        ...prevSessions,
+        [selectedSession.category]: prevSessions[selectedSession.category].filter(session => session.id !== selectedSession.id),
+      }));
+
+      setSelectedSession(null);
+      setOpenDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+  };
 
   if (loading) {
     return <CircularProgress />;
@@ -417,9 +458,17 @@ const Content: React.FC = () => {
                       <Button
                         startIcon={<EditIcon />}
                         onClick={handleEditClick}
-                        style={{ marginTop: "10px" }}
+                        style={{ marginTop: "10px", marginRight: "10px" }}
                       >
                         Edit
+                      </Button>
+                      <Button
+                        startIcon={<DeleteIcon />}
+                        onClick={handleDeleteClick}
+                        style={{ marginTop: "10px" }}
+                        color="error"
+                      >
+                        Delete
                       </Button>
                     </>
                   )}
@@ -495,7 +544,7 @@ const Content: React.FC = () => {
                 </Button>
               </label>
               {newSession.audio && (
-                <Typography>{newSession.audio.name}</Typography>
+                <Typography>{newSession.audio.name} (Duration: {newSession.duration})</Typography>
               )}
             </Grid>
             <Grid item xs={12}>
@@ -516,7 +565,12 @@ const Content: React.FC = () => {
               )}
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary" 
+                disabled={loading}
+              >
                 {loading ? <CircularProgress size={24} /> : "Upload Session"}
               </Button>
             </Grid>
@@ -539,6 +593,25 @@ const Content: React.FC = () => {
           <Button onClick={handleCancelSave}>Cancel</Button>
           <Button onClick={handleConfirmSave} autoFocus>
             Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete "{selectedSession?.title}"? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
