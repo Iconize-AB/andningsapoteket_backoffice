@@ -19,6 +19,7 @@ interface User {
   role: string;
   createdAt: string;
   updatedAt: string;
+  viewedOnBoarding: number | null;
 }
 
 const Users: React.FC = () => {
@@ -81,6 +82,7 @@ const Users: React.FC = () => {
               <TableCell>Role</TableCell>
               <TableCell>Created At</TableCell>
               <TableCell>Updated At</TableCell>
+              <TableCell>Onboarding Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -91,6 +93,7 @@ const Users: React.FC = () => {
                 <TableCell>{user.role || 'User'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
+                <TableCell>{user.viewedOnBoarding}</TableCell>
               </TableRow>
             ))}
           </TableBody>

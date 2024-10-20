@@ -25,6 +25,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
@@ -37,6 +39,7 @@ interface Session {
   description: string;
   category: string;
   categories: string[];
+  activated: boolean;
 }
 
 interface NewSession {
@@ -275,7 +278,10 @@ const Content: React.FC = () => {
         },
         body: JSON.stringify({
           title: selectedSession.title,
-          categories: selectedSession.categories,
+          description: selectedSession.description,
+          category: selectedSession.category,
+          categories: JSON.stringify(selectedSession.categories),
+          activated: selectedSession.activated,
         }),
       });
 
@@ -424,6 +430,20 @@ const Content: React.FC = () => {
                       />
                       <TextField
                         fullWidth
+                        label="Description"
+                        value={selectedSession.description}
+                        onChange={(e) =>
+                          setSelectedSession({
+                            ...selectedSession,
+                            description: e.target.value,
+                          })
+                        }
+                        margin="normal"
+                        multiline
+                        rows={4}
+                      />
+                      <TextField
+                        fullWidth
                         label="Categories"
                         value={selectedSession.categories.join(", ")}
                         onChange={(e) =>
@@ -433,6 +453,21 @@ const Content: React.FC = () => {
                           })
                         }
                         margin="normal"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectedSession.activated}
+                            onChange={(e) =>
+                              setSelectedSession({
+                                ...selectedSession,
+                                activated: e.target.checked,
+                              })
+                            }
+                            name="activated"
+                          />
+                        }
+                        label="Activated"
                       />
                       <Button type="submit" variant="contained" color="primary">
                         Save
@@ -455,6 +490,9 @@ const Content: React.FC = () => {
                           />
                         ))}
                       </div>
+                      <Typography variant="body2" style={{ marginTop: "10px" }}>
+                        Status: {selectedSession.activated ? "Activated" : "Deactivated"}
+                      </Typography>
                       <Button
                         startIcon={<EditIcon />}
                         onClick={handleEditClick}
