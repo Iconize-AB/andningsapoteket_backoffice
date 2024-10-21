@@ -9,7 +9,8 @@ import {
   Paper, 
   Typography, 
   CircularProgress, 
-  Alert 
+  Alert, 
+  Button 
 } from '@mui/material';
 
 interface User {
@@ -19,7 +20,7 @@ interface User {
   role: string;
   createdAt: string;
   updatedAt: string;
-  viewedOnBoarding: number | null;
+  viewedOnBoarding: string | null;
 }
 
 const Users: React.FC = () => {
@@ -60,6 +61,32 @@ const Users: React.FC = () => {
     fetchUsers();
   }, []);
 
+  const handleSendReminderOnboarding = async (email: string) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('http://localhost:3000/v1/user/reminder-onboarding', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resend onboarding email');
+      }
+
+      // Optionally, you can show a success message here
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    }
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -83,6 +110,7 @@ const Users: React.FC = () => {
               <TableCell>Created At</TableCell>
               <TableCell>Updated At</TableCell>
               <TableCell>Onboarding Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -94,6 +122,17 @@ const Users: React.FC = () => {
                 <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
                 <TableCell>{user.viewedOnBoarding}</TableCell>
+                <TableCell>
+                  {user.viewedOnBoarding !== "completed" && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleSendReminderOnboarding(user.email)}
+                    >
+                      Resend Onboarding
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

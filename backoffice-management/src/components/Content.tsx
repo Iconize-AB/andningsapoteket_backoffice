@@ -25,13 +25,19 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Checkbox,
   FormControlLabel,
+  Switch,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import StarIcon from '@mui/icons-material/Star';
 
 interface Session {
   id: string;
@@ -40,6 +46,7 @@ interface Session {
   category: string;
   categories: string[];
   activated: boolean;
+  highlighted: boolean;
 }
 
 interface NewSession {
@@ -50,6 +57,7 @@ interface NewSession {
   audio: File | null;
   image: File | null;
   duration: string;
+  activated: boolean;
 }
 
 interface GroupedSessions {
@@ -78,6 +86,125 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+const PageBackground = styled(Box)({
+  backgroundColor: '#F4F0E5',
+  minHeight: '100vh',
+  padding: '24px',
+});
+
+const GradientCard = styled(Card)({
+  background: 'linear-gradient(to bottom, #1E3A5F, #091D34)',
+  color: '#fff',
+  borderRadius: '16px',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+});
+
+const WhiteTextField = styled(TextField)({
+  '& .MuiInputBase-input': {
+    color: '#fff',
+  },
+  '& .MuiInputLabel-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    '&:hover fieldset': {
+      borderColor: 'rgba(255, 255, 255, 0.5)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#fff',
+    },
+  },
+  '& .MuiFormHelperText-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+});
+
+const WhiteSelect = styled(Select)({
+  color: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#fff',
+  },
+  '& .MuiSvgIcon-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+});
+
+const WhiteInputLabel = styled(InputLabel)({
+  color: 'rgba(255, 255, 255, 0.7)',
+  '&.Mui-focused': {
+    color: '#fff',
+  },
+});
+
+const WhiteFormControlLabel = styled(FormControlLabel)({
+  '& .MuiFormControlLabel-label': {
+    color: '#fff',
+  },
+});
+
+const WhiteSwitch = styled(Switch)(({ theme }) => ({
+  '& .MuiSwitch-switchBase.Mui-checked': {
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    },
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    backgroundColor: '#fff',
+  },
+}));
+
+const WhiteButton = styled(Button)({
+  color: '#fff',
+  borderColor: '#fff',
+  '&:hover': {
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+});
+
+const UploadButton = styled(WhiteButton)<{ component?: React.ElementType }>({
+  marginTop: '16px',
+  marginBottom: '8px',
+});
+
+const StyledTab = styled(Tab)({
+  color: '#fff',
+  '&.Mui-selected': {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+const StyledAccordion = styled(Accordion)({
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  color: '#fff',
+  '&:before': {
+    display: 'none',
+  },
+});
+
+const StyledAccordionSummary = styled(AccordionSummary)({
+  '& .MuiAccordionSummary-content': {
+    color: '#fff',
+  },
+});
+
+const StyledChip = styled(Chip)({
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  color: '#fff',
+  margin: '4px',
+});
+
 const Content: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [sessions, setSessions] = useState<GroupedSessions>({});
@@ -91,14 +218,17 @@ const Content: React.FC = () => {
     audio: null,
     image: null,
     duration: "",
+    activated: true,
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [highlightedSessions, setHighlightedSessions] = useState<Session[]>([]);
 
   useEffect(() => {
     fetchSessions();
+    fetchHighlightedSessions();
   }, []);
 
   const fetchSessions = async () => {
@@ -142,6 +272,27 @@ const Content: React.FC = () => {
     }
   };
 
+  const fetchHighlightedSessions = async () => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch("http://localhost:3000/v1/sessions/highlighted", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch highlighted sessions");
+
+      const data = await response.json();
+      setHighlightedSessions(data.items);
+    } catch (error) {
+      console.error("Error fetching highlighted sessions:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -149,12 +300,28 @@ const Content: React.FC = () => {
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = event.target;
-    setNewSession({ ...newSession, [name]: value });
+    const { name, value, type } = event.target;
+    let newValue: string | boolean = value;
+
+    if (type === 'checkbox') {
+      newValue = (event.target as HTMLInputElement).checked;
+    }
+    
+    setNewSession({ 
+      ...newSession, 
+      [name]: newValue 
+    });
   };
 
-  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
-    setNewSession({ ...newSession, category: event.target.value });
+  const handleCategoryChange = (
+    event: SelectChangeEvent<unknown>,
+    child: React.ReactNode
+  ) => {
+    const value = event.target.value;
+    setNewSession({
+      ...newSession,
+      category: typeof value === 'string' ? value : '',
+    });
   };
 
   const getAudioDuration = (file: File): Promise<string> => {
@@ -213,6 +380,7 @@ const Content: React.FC = () => {
       if (newSession.image) {
         formData.append('image', newSession.image);
       }
+      formData.append('activated', newSession.activated.toString());
 
       const response = await fetch("http://localhost:3000/v1/sessions/upload", {
         method: 'POST',
@@ -230,7 +398,7 @@ const Content: React.FC = () => {
       console.log("Session uploaded successfully:", result);
 
       // Reset form and refresh sessions list
-      setNewSession({ title: '', description: '', category: '', categories: '', audio: null, image: null, duration: '' });
+      setNewSession({ title: '', description: '', category: '', categories: '', audio: null, image: null, duration: '', activated: true });
       fetchSessions();
       setTabValue(0); // Switch back to the sessions overview tab
     } catch (error) {
@@ -345,6 +513,38 @@ const Content: React.FC = () => {
     setOpenDeleteDialog(false);
   };
 
+  const handleHighlightToggle = async (sessionId: string) => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(`http://localhost:3000/v1/sessions/toggle-highlight/${sessionId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to toggle session highlight");
+
+      const updatedSession = await response.json();
+
+      // Update the sessions state
+      setSessions(prevSessions => ({
+        ...prevSessions,
+        [updatedSession.session.category]: prevSessions[updatedSession.session.category].map(session =>
+          session.id === updatedSession.session.id ? updatedSession.session : session
+        ),
+      }));
+
+      // Update highlighted sessions
+      fetchHighlightedSessions();
+    } catch (error) {
+      console.error("Error toggling session highlight:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -354,267 +554,326 @@ const Content: React.FC = () => {
   }
 
   return (
-    <div>
-      <Typography variant="h4" gutterBottom>
+    <PageBackground>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1E3A5F' }}>
         Content Management
       </Typography>
-      <Tabs
-        value={tabValue}
-        onChange={handleTabChange}
-        aria-label="content tabs"
-      >
-        <Tab label="Overview of Sessions" />
-        <Tab label="Upload New Session" />
-      </Tabs>
-      <TabPanel value={tabValue} index={0}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={selectedSession ? 6 : 12}>
-            {Object.entries(sessions).map(([category, categorySessions]) => (
-              <Accordion key={category}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h6">{category}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container spacing={2}>
-                    {categorySessions.map((session) => (
-                      <Grid item xs={12} sm={6} md={4} key={session.id}>
-                        <Card
-                          onClick={() => handleSessionClick(session)}
-                          sx={{ cursor: "pointer" }}
-                        >
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              {session.title}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              {session.description}
-                            </Typography>
-                            <div style={{ marginTop: "10px" }}>
-                              {session?.categories?.map((cat) => (
-                                <Chip
-                                  key={cat}
-                                  label={cat}
-                                  style={{
-                                    marginRight: "5px",
-                                    marginBottom: "5px",
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
+      <GradientCard>
+        <CardContent>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="content tabs"
+            sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.2)', mb: 2 }}
+          >
+            <StyledTab label="Overview of Sessions" />
+            <StyledTab label="Upload New Session" />
+          </Tabs>
+          <TabPanel value={tabValue} index={0}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={selectedSession ? 6 : 12}>
+                <GradientCard sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      Highlighted Sessions
+                    </Typography>
+                    <List>
+                      {highlightedSessions.map((session) => (
+                        <ListItem key={session.id}>
+                          <ListItemText
+                            primary={session.title}
+                            secondary={`Category: ${session.category}`}
+                            secondaryTypographyProps={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                          />
+                          <ListItemSecondaryAction>
+                            <StarIcon sx={{ color: '#ffd700' }} />
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardContent>
+                </GradientCard>
+                {Object.entries(sessions).map(([category, categorySessions]) => (
+                  <StyledAccordion key={category}>
+                    <StyledAccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />}>
+                      <Typography variant="h6">{category}</Typography>
+                    </StyledAccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={2}>
+                        {categorySessions.map((session) => (
+                          <Grid item xs={12} sm={6} md={4} key={session.id}>
+                            <GradientCard
+                              onClick={() => handleSessionClick(session)}
+                              sx={{ cursor: "pointer", height: '100%' }}
+                            >
+                              <CardContent>
+                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                  {session.title}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
+                                  {session.description}
+                                </Typography>
+                                <Box sx={{ mb: 1 }}>
+                                  {session?.categories?.map((cat) => (
+                                    <StyledChip key={cat} label={cat} />
+                                  ))}
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <Switch
+                                    checked={session.highlighted}
+                                    onChange={() => handleHighlightToggle(session.id)}
+                                    color="primary"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <Typography variant="body2">
+                                    {session.highlighted ? "Highlighted" : "Not Highlighted"}
+                                  </Typography>
+                                </Box>
+                              </CardContent>
+                            </GradientCard>
+                          </Grid>
+                        ))}
                       </Grid>
-                    ))}
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Grid>
-          {selectedSession && (
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  {isEditing ? (
-                    <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
-                      <TextField
-                        fullWidth
-                        label="Title"
-                        value={selectedSession.title}
-                        onChange={(e) =>
-                          setSelectedSession({
-                            ...selectedSession,
-                            title: e.target.value,
-                          })
-                        }
-                        margin="normal"
-                      />
-                      <TextField
-                        fullWidth
-                        label="Description"
-                        value={selectedSession.description}
-                        onChange={(e) =>
-                          setSelectedSession({
-                            ...selectedSession,
-                            description: e.target.value,
-                          })
-                        }
-                        margin="normal"
-                        multiline
-                        rows={4}
-                      />
-                      <TextField
-                        fullWidth
-                        label="Categories"
-                        value={selectedSession.categories.join(", ")}
-                        onChange={(e) =>
-                          setSelectedSession({
-                            ...selectedSession,
-                            categories: e.target.value.split(", "),
-                          })
-                        }
-                        margin="normal"
-                      />
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={selectedSession.activated}
+                    </AccordionDetails>
+                  </StyledAccordion>
+                ))}
+              </Grid>
+              {selectedSession && (
+                <Grid item xs={12} md={6}>
+                  <GradientCard>
+                    <CardContent>
+                      {isEditing ? (
+                        <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
+                          <TextField
+                            fullWidth
+                            label="Title"
+                            value={selectedSession.title}
                             onChange={(e) =>
                               setSelectedSession({
                                 ...selectedSession,
-                                activated: e.target.checked,
+                                title: e.target.value,
                               })
                             }
-                            name="activated"
+                            margin="normal"
                           />
-                        }
-                        label="Activated"
-                      />
-                      <Button type="submit" variant="contained" color="primary">
-                        Save
-                      </Button>
-                    </form>
-                  ) : (
-                    <>
-                      <Typography variant="h6">
-                        {selectedSession.title}
-                      </Typography>
-                      <Typography variant="body2">
-                        {selectedSession.description}
-                      </Typography>
-                      <div style={{ marginTop: "10px" }}>
-                        {selectedSession?.categories?.map((cat) => (
-                          <Chip
-                            key={cat}
-                            label={cat}
-                            style={{ marginRight: "5px", marginBottom: "5px" }}
+                          <TextField
+                            fullWidth
+                            label="Description"
+                            value={selectedSession.description}
+                            onChange={(e) =>
+                              setSelectedSession({
+                                ...selectedSession,
+                                description: e.target.value,
+                              })
+                            }
+                            margin="normal"
+                            multiline
+                            rows={4}
                           />
-                        ))}
-                      </div>
-                      <Typography variant="body2" style={{ marginTop: "10px" }}>
-                        Status: {selectedSession.activated ? "Activated" : "Deactivated"}
-                      </Typography>
-                      <Button
-                        startIcon={<EditIcon />}
-                        onClick={handleEditClick}
-                        style={{ marginTop: "10px", marginRight: "10px" }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        startIcon={<DeleteIcon />}
-                        onClick={handleDeleteClick}
-                        style={{ marginTop: "10px" }}
-                        color="error"
-                      >
-                        Delete
-                      </Button>
-                    </>
+                          <TextField
+                            fullWidth
+                            label="Categories"
+                            value={selectedSession.categories.join(", ")}
+                            onChange={(e) =>
+                              setSelectedSession({
+                                ...selectedSession,
+                                categories: e.target.value.split(", "),
+                              })
+                            }
+                            margin="normal"
+                          />
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={selectedSession.activated}
+                                onChange={(e) =>
+                                  setSelectedSession({
+                                    ...selectedSession,
+                                    activated: e.target.checked,
+                                  })
+                                }
+                                name="activated"
+                              />
+                            }
+                            label="Activated"
+                          />
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={selectedSession.highlighted}
+                                onChange={(e) =>
+                                  setSelectedSession({
+                                    ...selectedSession,
+                                    highlighted: e.target.checked,
+                                  })
+                                }
+                                name="highlighted"
+                              />
+                            }
+                            label="Highlighted"
+                          />
+                          <Button type="submit" variant="contained" color="primary">
+                            Save
+                          </Button>
+                        </form>
+                      ) : (
+                        <>
+                          <Typography variant="h6">
+                            {selectedSession.title}
+                          </Typography>
+                          <Typography variant="body2">
+                            {selectedSession.description}
+                          </Typography>
+                          <div style={{ marginTop: "10px" }}>
+                            {selectedSession?.categories?.map((cat) => (
+                              <Chip
+                                key={cat}
+                                label={cat}
+                                style={{ marginRight: "5px", marginBottom: "5px" }}
+                              />
+                            ))}
+                          </div>
+                          <Typography variant="body2" style={{ marginTop: "10px" }}>
+                            Status: {selectedSession.activated ? "Activated" : "Deactivated"}
+                          </Typography>
+                          <Typography variant="body2" style={{ marginTop: "10px" }}>
+                            Highlighted: {selectedSession.highlighted ? "Yes" : "No"}
+                          </Typography>
+                          <Button
+                            startIcon={<EditIcon />}
+                            onClick={handleEditClick}
+                            style={{ marginTop: "10px", marginRight: "10px" }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            startIcon={<DeleteIcon />}
+                            onClick={handleDeleteClick}
+                            style={{ marginTop: "10px" }}
+                            color="error"
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </CardContent>
+                  </GradientCard>
+                </Grid>
+              )}
+            </Grid>
+          </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <WhiteTextField
+                    fullWidth
+                    label="Session Title"
+                    name="title"
+                    value={newSession.title}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <WhiteTextField
+                    fullWidth
+                    label="Description"
+                    name="description"
+                    value={newSession.description}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={4}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <WhiteInputLabel>Main Category</WhiteInputLabel>
+                    <WhiteSelect
+                      value={newSession.category}
+                      onChange={handleCategoryChange}
+                      name="category"
+                      required
+                    >
+                      {['Fire', 'Earth', 'Water', 'Wind'].map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </MenuItem>
+                      ))}
+                    </WhiteSelect>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <WhiteTextField
+                    fullWidth
+                    label="Additional Categories"
+                    name="categories"
+                    value={newSession.categories}
+                    onChange={handleInputChange}
+                    helperText="Enter categories separated by commas"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <input
+                    accept="audio/*"
+                    style={{ display: "none" }}
+                    id="audio-file-upload"
+                    type="file"
+                    onChange={(e) => handleFileChange(e, 'audio')}
+                  />
+                  <label htmlFor="audio-file-upload">
+                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                      Upload Audio
+                    </UploadButton>
+                  </label>
+                  {newSession.audio && (
+                    <Typography>{newSession.audio.name} (Duration: {newSession.duration})</Typography>
                   )}
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-      </TabPanel>
-      <TabPanel value={tabValue} index={1}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Session Title"
-                name="title"
-                value={newSession.title}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={newSession.description}
-                onChange={handleInputChange}
-                multiline
-                rows={4}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Main Category</InputLabel>
-                <Select
-                  value={newSession.category}
-                  onChange={handleCategoryChange}
-                  name="category"
-                  required
-                >
-                  {['Fire', 'Earth', 'Water', 'Wind'].map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Additional Categories"
-                name="categories"
-                value={newSession.categories}
-                onChange={handleInputChange}
-                helperText="Enter categories separated by commas"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <input
-                accept="audio/*"
-                style={{ display: "none" }}
-                id="audio-file-upload"
-                type="file"
-                onChange={(e) => handleFileChange(e, 'audio')}
-              />
-              <label htmlFor="audio-file-upload">
-                <Button variant="contained" component="span" startIcon={<CloudUploadIcon />}>
-                  Upload Audio
-                </Button>
-              </label>
-              {newSession.audio && (
-                <Typography>{newSession.audio.name} (Duration: {newSession.duration})</Typography>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              <input
-                accept="image/*"
-                style={{ display: "none" }}
-                id="image-file-upload"
-                type="file"
-                onChange={(e) => handleFileChange(e, 'image')}
-              />
-              <label htmlFor="image-file-upload">
-                <Button variant="contained" component="span" startIcon={<CloudUploadIcon />}>
-                  Upload Image
-                </Button>
-              </label>
-              {newSession.image && (
-                <Typography>{newSession.image.name}</Typography>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary" 
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : "Upload Session"}
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </TabPanel>
+                </Grid>
+                <Grid item xs={12}>
+                  <input
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    id="image-file-upload"
+                    type="file"
+                    onChange={(e) => handleFileChange(e, 'image')}
+                  />
+                  <label htmlFor="image-file-upload">
+                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                      Upload Image
+                    </UploadButton>
+                  </label>
+                  {newSession.image && (
+                    <Typography>{newSession.image.name}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  <WhiteFormControlLabel
+                    control={
+                      <WhiteSwitch
+                        checked={newSession.activated}
+                        onChange={handleInputChange}
+                        name="activated"
+                      />
+                    }
+                    label="Activate session"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <WhiteButton 
+                    type="submit" 
+                    variant="outlined" 
+                    disabled={loading}
+                  >
+                    {loading ? <CircularProgress size={24} /> : "Upload Session"}
+                  </WhiteButton>
+                </Grid>
+              </Grid>
+            </form>
+          </TabPanel>
+        </CardContent>
+      </GradientCard>
       <Dialog
         open={openConfirmDialog}
         onClose={handleCancelSave}
@@ -653,7 +912,7 @@ const Content: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </PageBackground>
   );
 };
 
