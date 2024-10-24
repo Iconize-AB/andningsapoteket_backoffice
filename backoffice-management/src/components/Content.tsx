@@ -38,6 +38,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import StarIcon from '@mui/icons-material/Star';
+import SaveIcon from '@mui/icons-material/Save';
 
 interface Session {
   id: string;
@@ -68,6 +69,11 @@ interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
+}
+
+interface HelpOptionContent {
+  option: string;
+  content: string;
 }
 
 function TabPanel(props: TabPanelProps) {
@@ -225,10 +231,15 @@ const Content: React.FC = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [highlightedSessions, setHighlightedSessions] = useState<Session[]>([]);
+  const [helpOptionContents, setHelpOptionContents] = useState<HelpOptionContent[]>([]);
+  const [selectedHelpOption, setSelectedHelpOption] = useState<string>('');
+  const [selectedHelpContent, setSelectedHelpContent] = useState<string>('');
+  const [newHelpOption, setNewHelpOption] = useState<string>('');
 
   useEffect(() => {
     fetchSessions();
     fetchHighlightedSessions();
+    fetchHelpOptionContents();
   }, []);
 
   const fetchSessions = async () => {
@@ -289,6 +300,27 @@ const Content: React.FC = () => {
       setHighlightedSessions(data.items);
     } catch (error) {
       console.error("Error fetching highlighted sessions:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
+  const fetchHelpOptionContents = async () => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch("http://localhost:3000/v1/backoffice/help-option-contents", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch help option contents");
+
+      const data = await response.json();
+      setHelpOptionContents(data.contents);
+    } catch (error) {
+      console.error("Error fetching help option contents:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred");
     }
   };
@@ -545,6 +577,64 @@ const Content: React.FC = () => {
     }
   };
 
+  const handleHelpOptionChange = (
+    event: SelectChangeEvent<unknown>,
+    child: React.ReactNode
+  ) => {
+    const option = event.target.value;
+    if (typeof option === 'string') {
+      setSelectedHelpOption(option);
+      const content = helpOptionContents.find(item => item.option === option)?.content || '';
+      setSelectedHelpContent(content);
+    }
+  };
+
+  const handleHelpContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSelectedHelpContent(event.target.value);
+  };
+
+  const handleNewHelpOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewHelpOption(event.target.value);
+  };
+
+  const handleHelpContentSubmit = async () => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const optionToSubmit = selectedHelpOption || newHelpOption;
+      if (!optionToSubmit) {
+        alert("Please select or enter a help option.");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3000/v1/backoffice/update-help-option-content", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          option: optionToSubmit,
+          content: selectedHelpContent,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update help option content");
+
+      // Clear states
+      setNewHelpOption('');
+      setSelectedHelpOption('');
+      setSelectedHelpContent('');
+
+      // Refresh help option contents
+      await fetchHelpOptionContents();
+    } catch (error) {
+      console.error("Error updating help option content:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -568,6 +658,7 @@ const Content: React.FC = () => {
           >
             <StyledTab label="Overview of Sessions" />
             <StyledTab label="Upload New Session" />
+            <StyledTab label="Help Option Content" />
           </Tabs>
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
@@ -871,6 +962,68 @@ const Content: React.FC = () => {
                 </Grid>
               </Grid>
             </form>
+          </TabPanel>
+          <TabPanel value={tabValue} index={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <WhiteInputLabel>Select Help Option</WhiteInputLabel>
+                  <WhiteSelect
+                    value={selectedHelpOption}
+                    onChange={handleHelpOptionChange}
+                    required
+                  >
+                    {helpOptionContents.map((option) => (
+                      <MenuItem key={option.option} value={option.option}>
+                        {option.option}
+                      </MenuItem>
+                    ))}
+                  </WhiteSelect>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <WhiteTextField
+                  fullWidth
+                  label="Or Enter New Help Option"
+                  value={newHelpOption}
+                  onChange={handleNewHelpOptionChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <WhiteTextField
+                  fullWidth
+                  label="Help Content"
+                  multiline
+                  rows={6}
+                  value={selectedHelpContent}
+                  onChange={handleHelpContentChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <WhiteButton
+                  onClick={handleHelpContentSubmit}
+                  variant="outlined"
+                  startIcon={<SaveIcon />}
+                >
+                  Save Help Content
+                </WhiteButton>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1E3A5F' }}>
+                  Existing Help Options
+                </Typography>
+                <List>
+                  {helpOptionContents.map((item) => (
+                    <ListItem key={item.option}>
+                      <ListItemText
+                        primary={item.option}
+                        secondary={item.content}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Grid>
+            </Grid>
           </TabPanel>
         </CardContent>
       </GradientCard>
