@@ -36,7 +36,7 @@ const Users: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/user/all', {
+        const response = await fetch('http://localhost:3000/v1/backoffice/users/all', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -68,7 +68,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/user/reminder-onboarding', {
+      const response = await fetch('http://localhost:3000/v1/user/reminder-onboarding', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
