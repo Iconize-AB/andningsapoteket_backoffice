@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://localhost:3000/v1/statistics/user-stats', {
+        const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/statistics/user-stats', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

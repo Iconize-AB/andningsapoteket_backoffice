@@ -249,7 +249,7 @@ const Content: React.FC = () => {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch("http://localhost:3000/v1/sessions/all", {
+      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -288,7 +288,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch("http://localhost:3000/v1/sessions/highlighted", {
+      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/highlighted", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -309,7 +309,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch("http://localhost:3000/v1/backoffice/help-option-contents", {
+      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/help-option-contents", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -414,7 +414,7 @@ const Content: React.FC = () => {
       }
       formData.append('activated', newSession.activated.toString());
 
-      const response = await fetch("http://localhost:3000/v1/sessions/upload", {
+      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/upload", {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -470,7 +470,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(`http://localhost:3000/v1/sessions/update/${selectedSession.id}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/update/${selectedSession.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -516,7 +516,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(`http://localhost:3000/v1/sessions/delete/${selectedSession.id}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/delete/${selectedSession.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -550,7 +550,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(`http://localhost:3000/v1/sessions/toggle-highlight/${sessionId}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/sessions/toggle-highlight/${sessionId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -608,7 +608,7 @@ const Content: React.FC = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:3000/v1/backoffice/update-help-option-content", {
+      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/update-help-option-content", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
