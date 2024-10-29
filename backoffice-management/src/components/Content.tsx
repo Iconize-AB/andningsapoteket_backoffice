@@ -59,6 +59,8 @@ interface NewSession {
   image: File | null;
   duration: string;
   activated: boolean;
+  startQuestion: string;
+  endQuestion: string;
 }
 
 interface GroupedSessions {
@@ -92,123 +94,103 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-const PageBackground = styled(Box)({
-  backgroundColor: '#F4F0E5',
-  minHeight: '100vh',
-  padding: '24px',
-});
-
-const GradientCard = styled(Card)({
-  background: 'linear-gradient(to bottom, #1E3A5F, #091D34)',
-  color: '#fff',
-  borderRadius: '16px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-});
-
-const WhiteTextField = styled(TextField)({
+const StyledTextField = styled(TextField)({
   '& .MuiInputBase-input': {
-    color: '#fff',
+    color: '#333',
   },
   '& .MuiInputLabel-root': {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(0, 0, 0, 0.7)',
   },
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
-      borderColor: 'rgba(255, 255, 255, 0.3)',
+      borderColor: 'rgba(0, 0, 0, 0.23)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(255, 255, 255, 0.5)',
+      borderColor: 'rgba(0, 0, 0, 0.5)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#fff',
+      borderColor: '#1976d2',
     },
   },
-  '& .MuiFormHelperText-root': {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-});
-
-const WhiteSelect = styled(Select)({
-  color: '#fff',
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#fff',
-  },
-  '& .MuiSvgIcon-root': {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-});
-
-const WhiteInputLabel = styled(InputLabel)({
-  color: 'rgba(255, 255, 255, 0.7)',
-  '&.Mui-focused': {
-    color: '#fff',
-  },
-});
-
-const WhiteFormControlLabel = styled(FormControlLabel)({
-  '& .MuiFormControlLabel-label': {
-    color: '#fff',
-  },
-});
-
-const WhiteSwitch = styled(Switch)(({ theme }) => ({
-  '& .MuiSwitch-switchBase.Mui-checked': {
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    },
-  },
-  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-    backgroundColor: '#fff',
-  },
-}));
-
-const WhiteButton = styled(Button)({
-  color: '#fff',
-  borderColor: '#fff',
-  '&:hover': {
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-});
-
-const UploadButton = styled(WhiteButton)<{ component?: React.ElementType }>({
-  marginTop: '16px',
-  marginBottom: '8px',
 });
 
 const StyledTab = styled(Tab)({
-  color: '#fff',
+  color: '#666',
   '&.Mui-selected': {
-    color: '#fff',
+    color: '#1976d2',
     fontWeight: 'bold',
   },
 });
 
 const StyledAccordion = styled(Accordion)({
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  color: '#fff',
+  backgroundColor: '#fff',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
   '&:before': {
     display: 'none',
   },
-});
-
-const StyledAccordionSummary = styled(AccordionSummary)({
-  '& .MuiAccordionSummary-content': {
-    color: '#fff',
+  '&.Mui-expanded': {
+    margin: '16px 0',
   },
 });
 
 const StyledChip = styled(Chip)({
-  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  color: '#fff',
+  backgroundColor: '#f5f5f5',
+  color: '#333',
   margin: '4px',
+  '&:hover': {
+    backgroundColor: '#e0e0e0',
+  },
+});
+
+
+const PageBackground = styled('div')({
+  backgroundColor: '#fff',
+  minHeight: '100vh',
+  padding: '24px',
+});
+
+const StyledButton = styled(Button)({
+  backgroundColor: '#1976d2',
+  color: '#fff',
+  '&:hover': {
+    backgroundColor: '#1565c0',
+  },
+  '&.MuiButton-outlined': {
+    color: '#fff',
+    borderColor: '#1976d2',
+    '&:hover': {
+      backgroundColor: '#000',
+    },
+  },
+});
+
+const StyledSwitch = styled(Switch)({
+  '& .MuiSwitch-switchBase.Mui-checked': {
+    color: '#1976d2',
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 0.04)',
+    },
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    backgroundColor: '#1976d2',
+  },
+});
+
+const StyledAccordionSummary = styled(AccordionSummary)({
+  backgroundColor: '#f5f5f5',
+  '&.Mui-expanded': {
+    minHeight: '48px',
+  },
+  '& .MuiAccordionSummary-content': {
+    margin: '12px 0',
+    '&.Mui-expanded': {
+      margin: '12px 0',
+    },
+  },
+  '& .MuiTypography-root': {
+    fontWeight: 500,
+    color: '#333',
+  },
 });
 
 const Content: React.FC = () => {
@@ -225,6 +207,8 @@ const Content: React.FC = () => {
     image: null,
     duration: "",
     activated: true,
+    startQuestion: "",
+    endQuestion: "",
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -249,7 +233,7 @@ const Content: React.FC = () => {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch("http://localhost:3000/v1/backoffice/users/all", {
+      const response = await fetch("http://localhost:3000/v1/backoffice/sessions/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -262,7 +246,7 @@ const Content: React.FC = () => {
       const data = await response.json();
 
       // Group sessions by category
-      const groupedSessions = data.items.reduce(
+      const groupedSessions = data?.items?.reduce(
         (acc: GroupedSessions, session: Session) => {
           if (!acc[session.category]) {
             acc[session.category] = [];
@@ -413,6 +397,12 @@ const Content: React.FC = () => {
         formData.append('image', newSession.image);
       }
       formData.append('activated', newSession.activated.toString());
+      if (newSession.startQuestion.trim()) {
+        formData.append('startQuestion', newSession.startQuestion);
+      }
+      if (newSession.endQuestion.trim()) {
+        formData.append('endQuestion', newSession.endQuestion);
+      }
 
       const response = await fetch("http://localhost:3000/v1/backoffice/sessions/upload", {
         method: 'POST',
@@ -430,7 +420,18 @@ const Content: React.FC = () => {
       console.log("Session uploaded successfully:", result);
 
       // Reset form and refresh sessions list
-      setNewSession({ title: '', description: '', category: '', categories: '', audio: null, image: null, duration: '', activated: true });
+      setNewSession({ 
+        title: '', 
+        description: '', 
+        category: '', 
+        categories: '', 
+        audio: null, 
+        image: null, 
+        duration: '', 
+        activated: true,
+        startQuestion: '',
+        endQuestion: ''
+      });
       fetchSessions();
       setTabValue(0); // Switch back to the sessions overview tab
     } catch (error) {
@@ -645,36 +646,57 @@ const Content: React.FC = () => {
 
   return (
     <PageBackground>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1E3A5F' }}>
+      <Typography 
+        variant="h4" 
+        gutterBottom 
+        sx={{ 
+          fontWeight: '500', 
+          color: '#333',
+          mb: 4 
+        }}
+      >
         Content Management
       </Typography>
-      <GradientCard>
+      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
         <CardContent>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
             aria-label="content tabs"
-            sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.2)', mb: 2 }}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              mb: 3
+            }}
           >
             <StyledTab label="Overview of Sessions" />
             <StyledTab label="Upload New Session" />
             <StyledTab label="Help Option Content" />
           </Tabs>
+
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={selectedSession ? 6 : 12}>
-                <GradientCard sx={{ mb: 2 }}>
+                <Card sx={{ mb: 3, borderRadius: 2 }}>
                   <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: '500' }}>
                       Highlighted Sessions
                     </Typography>
                     <List>
                       {highlightedSessions.map((session) => (
-                        <ListItem key={session.id}>
+                        <ListItem 
+                          key={session.id}
+                          sx={{
+                            borderRadius: 1,
+                            mb: 1,
+                            '&:hover': {
+                              backgroundColor: '#f5f5f5',
+                            },
+                          }}
+                        >
                           <ListItemText
                             primary={session.title}
                             secondary={`Category: ${session.category}`}
-                            secondaryTypographyProps={{ color: 'rgba(255, 255, 255, 0.7)' }}
                           />
                           <ListItemSecondaryAction>
                             <StarIcon sx={{ color: '#ffd700' }} />
@@ -683,17 +705,18 @@ const Content: React.FC = () => {
                       ))}
                     </List>
                   </CardContent>
-                </GradientCard>
+                </Card>
+
                 {Object.entries(sessions).map(([category, categorySessions]) => (
                   <StyledAccordion key={category}>
-                    <StyledAccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />}>
+                    <StyledAccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">{category}</Typography>
                     </StyledAccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={2}>
                         {categorySessions.map((session) => (
                           <Grid item xs={12} sm={6} md={4} key={session.id}>
-                            <GradientCard
+                            <Card
                               onClick={() => handleSessionClick(session)}
                               sx={{ cursor: "pointer", height: '100%' }}
                             >
@@ -721,7 +744,7 @@ const Content: React.FC = () => {
                                   </Typography>
                                 </Box>
                               </CardContent>
-                            </GradientCard>
+                            </Card>
                           </Grid>
                         ))}
                       </Grid>
@@ -731,7 +754,7 @@ const Content: React.FC = () => {
               </Grid>
               {selectedSession && (
                 <Grid item xs={12} md={6}>
-                  <GradientCard>
+                  <Card sx={{ borderRadius: 2 }}>
                     <CardContent>
                       {isEditing ? (
                         <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
@@ -848,16 +871,16 @@ const Content: React.FC = () => {
                         </>
                       )}
                     </CardContent>
-                  </GradientCard>
+                  </Card>
                 </Grid>
               )}
             </Grid>
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
             <form onSubmit={handleSubmit}>
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <WhiteTextField
+                  <StyledTextField
                     fullWidth
                     label="Session Title"
                     name="title"
@@ -867,7 +890,7 @@ const Content: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <WhiteTextField
+                  <StyledTextField
                     fullWidth
                     label="Description"
                     name="description"
@@ -880,8 +903,8 @@ const Content: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <WhiteInputLabel>Main Category</WhiteInputLabel>
-                    <WhiteSelect
+                    <InputLabel>Main Category</InputLabel>
+                    <Select
                       value={newSession.category}
                       onChange={handleCategoryChange}
                       name="category"
@@ -892,11 +915,11 @@ const Content: React.FC = () => {
                           {category.charAt(0).toUpperCase() + category.slice(1)}
                         </MenuItem>
                       ))}
-                    </WhiteSelect>
+                    </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
-                  <WhiteTextField
+                  <StyledTextField
                     fullWidth
                     label="Additional Categories"
                     name="categories"
@@ -914,9 +937,13 @@ const Content: React.FC = () => {
                     onChange={(e) => handleFileChange(e, 'audio')}
                   />
                   <label htmlFor="audio-file-upload">
-                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                    <StyledButton
+                      variant="contained"
+                      sx={{ display: 'inline-flex' }}
+                      startIcon={<CloudUploadIcon />}
+                    >
                       Upload Audio
-                    </UploadButton>
+                    </StyledButton>
                   </label>
                   {newSession.audio && (
                     <Typography>{newSession.audio.name} (Duration: {newSession.duration})</Typography>
@@ -931,18 +958,22 @@ const Content: React.FC = () => {
                     onChange={(e) => handleFileChange(e, 'image')}
                   />
                   <label htmlFor="image-file-upload">
-                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                    <StyledButton
+                      variant="contained"
+                      sx={{ display: 'inline-flex' }}
+                      startIcon={<CloudUploadIcon />}
+                    >
                       Upload Image
-                    </UploadButton>
+                    </StyledButton>
                   </label>
                   {newSession.image && (
                     <Typography>{newSession.image.name}</Typography>
                   )}
                 </Grid>
                 <Grid item xs={12}>
-                  <WhiteFormControlLabel
+                  <FormControlLabel
                     control={
-                      <WhiteSwitch
+                      <StyledSwitch
                         checked={newSession.activated}
                         onChange={handleInputChange}
                         name="activated"
@@ -952,13 +983,37 @@ const Content: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <WhiteButton 
+                  <StyledTextField
+                    fullWidth
+                    label="Start Question"
+                    name="startQuestion"
+                    value={newSession.startQuestion}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Question to ask before the session starts (optional)"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    label="End Question"
+                    name="endQuestion"
+                    value={newSession.endQuestion}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Question to ask after the session ends (optional)"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledButton 
                     type="submit" 
                     variant="outlined" 
                     disabled={loading}
                   >
                     {loading ? <CircularProgress size={24} /> : "Upload Session"}
-                  </WhiteButton>
+                  </StyledButton>
                 </Grid>
               </Grid>
             </form>
@@ -967,8 +1022,8 @@ const Content: React.FC = () => {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <WhiteInputLabel>Select Help Option</WhiteInputLabel>
-                  <WhiteSelect
+                  <InputLabel>Select Help Option</InputLabel>
+                  <Select
                     value={selectedHelpOption}
                     onChange={handleHelpOptionChange}
                     required
@@ -978,11 +1033,11 @@ const Content: React.FC = () => {
                         {option.option}
                       </MenuItem>
                     ))}
-                  </WhiteSelect>
+                  </Select>
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <WhiteTextField
+                <StyledTextField
                   fullWidth
                   label="Or Enter New Help Option"
                   value={newHelpOption}
@@ -990,7 +1045,7 @@ const Content: React.FC = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <WhiteTextField
+                <StyledTextField
                   fullWidth
                   label="Help Content"
                   multiline
@@ -1000,13 +1055,13 @@ const Content: React.FC = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <WhiteButton
+                <StyledButton
                   onClick={handleHelpContentSubmit}
                   variant="outlined"
                   startIcon={<SaveIcon />}
                 >
                   Save Help Content
-                </WhiteButton>
+                </StyledButton>
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#1E3A5F' }}>
@@ -1026,7 +1081,7 @@ const Content: React.FC = () => {
             </Grid>
           </TabPanel>
         </CardContent>
-      </GradientCard>
+      </Card>
       <Dialog
         open={openConfirmDialog}
         onClose={handleCancelSave}
