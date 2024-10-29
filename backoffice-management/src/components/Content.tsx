@@ -39,6 +39,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import StarIcon from '@mui/icons-material/Star';
 import SaveIcon from '@mui/icons-material/Save';
+import { ButtonProps } from '@mui/material/Button';
 
 interface Session {
   id: string;
@@ -149,20 +150,28 @@ const PageBackground = styled('div')({
   padding: '24px',
 });
 
-const StyledButton = styled(Button)({
+// Define interface for the extended button props
+interface StyledButtonProps extends ButtonProps {
+  component?: React.ElementType;
+}
+
+// Update the styled button definition
+const StyledButton = styled(Button, {
+  shouldForwardProp: (prop) => prop !== 'component',
+})<StyledButtonProps>(({ theme }) => ({
   backgroundColor: '#1976d2',
   color: '#fff',
   '&:hover': {
     backgroundColor: '#1565c0',
   },
   '&.MuiButton-outlined': {
-    color: '#fff',
+    color: '#1976d2',
     borderColor: '#1976d2',
     '&:hover': {
-      backgroundColor: '#000',
+      backgroundColor: 'rgba(25, 118, 210, 0.04)',
     },
   },
-});
+}));
 
 const StyledSwitch = styled(Switch)({
   '& .MuiSwitch-switchBase.Mui-checked': {
@@ -191,6 +200,21 @@ const StyledAccordionSummary = styled(AccordionSummary)({
     fontWeight: 500,
     color: '#333',
   },
+});
+
+
+const WhiteButton = styled(Button)({
+  color: '#fff',
+  borderColor: '#fff',
+  '&:hover': {
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+});
+
+const UploadButton = styled(WhiteButton)<{ component?: React.ElementType }>({
+  marginTop: '16px',
+  marginBottom: '8px',
 });
 
 const Content: React.FC = () => {
@@ -937,13 +961,9 @@ const Content: React.FC = () => {
                     onChange={(e) => handleFileChange(e, 'audio')}
                   />
                   <label htmlFor="audio-file-upload">
-                    <StyledButton
-                      variant="contained"
-                      sx={{ display: 'inline-flex' }}
-                      startIcon={<CloudUploadIcon />}
-                    >
+                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
                       Upload Audio
-                    </StyledButton>
+                    </UploadButton>
                   </label>
                   {newSession.audio && (
                     <Typography>{newSession.audio.name} (Duration: {newSession.duration})</Typography>
@@ -958,13 +978,9 @@ const Content: React.FC = () => {
                     onChange={(e) => handleFileChange(e, 'image')}
                   />
                   <label htmlFor="image-file-upload">
-                    <StyledButton
-                      variant="contained"
-                      sx={{ display: 'inline-flex' }}
-                      startIcon={<CloudUploadIcon />}
-                    >
+                    <UploadButton variant="contained" component="span" startIcon={<CloudUploadIcon />}>
                       Upload Image
-                    </StyledButton>
+                    </UploadButton>
                   </label>
                   {newSession.image && (
                     <Typography>{newSession.image.name}</Typography>
