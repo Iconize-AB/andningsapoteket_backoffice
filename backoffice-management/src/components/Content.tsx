@@ -31,6 +31,7 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  IconButton,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -165,10 +166,10 @@ const StyledButton = styled(Button, {
     backgroundColor: '#1565c0',
   },
   '&.MuiButton-outlined': {
-    color: '#1976d2',
+    color: '#fff',
     borderColor: '#1976d2',
     '&:hover': {
-      backgroundColor: 'rgba(25, 118, 210, 0.04)',
+      backgroundColor: '#000',
     },
   },
 }));
@@ -240,9 +241,8 @@ const Content: React.FC = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [highlightedSessions, setHighlightedSessions] = useState<Session[]>([]);
   const [helpOptionContents, setHelpOptionContents] = useState<HelpOptionContent[]>([]);
-  const [selectedHelpOption, setSelectedHelpOption] = useState<string>('');
-  const [selectedHelpContent, setSelectedHelpContent] = useState<string>('');
   const [newHelpOption, setNewHelpOption] = useState<string>('');
+  const [helpContent, setHelpContent] = useState<string>('');
 
   useEffect(() => {
     fetchSessions();
@@ -602,20 +602,8 @@ const Content: React.FC = () => {
     }
   };
 
-  const handleHelpOptionChange = (
-    event: SelectChangeEvent<unknown>,
-    child: React.ReactNode
-  ) => {
-    const option = event.target.value;
-    if (typeof option === 'string') {
-      setSelectedHelpOption(option);
-      const content = helpOptionContents.find(item => item.option === option)?.content || '';
-      setSelectedHelpContent(content);
-    }
-  };
-
   const handleHelpContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setSelectedHelpContent(event.target.value);
+    setHelpContent(event.target.value);
   };
 
   const handleNewHelpOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -627,9 +615,8 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const optionToSubmit = selectedHelpOption || newHelpOption;
-      if (!optionToSubmit) {
-        alert("Please select or enter a help option.");
+      if (!newHelpOption) {
+        alert("Please enter a help option.");
         return;
       }
 
@@ -640,8 +627,8 @@ const Content: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          option: optionToSubmit,
-          content: selectedHelpContent,
+          option: newHelpOption,
+          content: helpContent,
         }),
       });
 
@@ -649,13 +636,37 @@ const Content: React.FC = () => {
 
       // Clear states
       setNewHelpOption('');
-      setSelectedHelpOption('');
-      setSelectedHelpContent('');
+      setHelpContent('');
 
       // Refresh help option contents
       await fetchHelpOptionContents();
     } catch (error) {
       console.error("Error updating help option content:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+    }
+  };
+
+  const handleDeleteHelpOption = async (optionToDelete: string) => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(`http://localhost:3000/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete help option content");
+      }
+
+      // Refresh help option contents
+      await fetchHelpOptionContents();
+    } catch (error) {
+      console.error("Error deleting help option content:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred");
     }
   };
@@ -1037,27 +1048,12 @@ const Content: React.FC = () => {
           <TabPanel value={tabValue} index={2}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Select Help Option</InputLabel>
-                  <Select
-                    value={selectedHelpOption}
-                    onChange={handleHelpOptionChange}
-                    required
-                  >
-                    {helpOptionContents.map((option) => (
-                      <MenuItem key={option.option} value={option.option}>
-                        {option.option}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
                 <StyledTextField
                   fullWidth
-                  label="Or Enter New Help Option"
+                  label="Enter Help Option"
                   value={newHelpOption}
                   onChange={handleNewHelpOptionChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12}>
@@ -1066,7 +1062,7 @@ const Content: React.FC = () => {
                   label="Help Content"
                   multiline
                   rows={6}
-                  value={selectedHelpContent}
+                  value={helpContent}
                   onChange={handleHelpContentChange}
                 />
               </Grid>
@@ -1085,7 +1081,19 @@ const Content: React.FC = () => {
                 </Typography>
                 <List>
                   {helpOptionContents.map((item) => (
-                    <ListItem key={item.option}>
+                    <ListItem 
+                      key={item.option}
+                      secondaryAction={
+                        <IconButton 
+                          edge="end" 
+                          aria-label="delete"
+                          onClick={() => handleDeleteHelpOption(item.option)}
+                          sx={{ color: 'error.main' }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
                       <ListItemText
                         primary={item.option}
                         secondary={item.content}
