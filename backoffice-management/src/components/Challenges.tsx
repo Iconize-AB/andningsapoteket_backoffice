@@ -413,6 +413,102 @@ const Challenges: React.FC = () => {
     setIsEditing(false);
   };
 
+  // Add this new function to handle challenge deletion
+  const handleDeleteChallenge = async (challengeId: string) => {
+    if (!window.confirm('Are you sure you want to delete this challenge? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`http://localhost:3000/v1/challenges/delete/${challengeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete challenge');
+      }
+
+      setSuccess('Challenge deleted successfully!');
+      fetchChallenges(); // Refresh the challenges list
+    } catch (error) {
+      console.error('Error deleting challenge:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add this new function to handle session deletion
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`http://localhost:3000/v1/challenges/session/${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete session');
+      }
+
+      const data = await response.json();
+      setSuccess('Session deleted successfully!');
+      
+      // Update the challenges list with the updated challenge data
+      setChallenges(challenges.map(challenge => 
+        challenge.id === data.challenge.id ? data.challenge : challenge
+      ));
+
+      // If we're in edit mode, also update the sessions state
+      if (isEditing && editingChallenge) {
+        // Find the index of the deleted session
+        const sessionIndex = editingChallenge.sessions.findIndex(s => s.id === sessionId);
+        if (sessionIndex !== -1) {
+          // Remove the session from the sessions state
+          const newSessions = [...sessions];
+          newSessions.splice(sessionIndex, 1);
+          setSessions(newSessions);
+
+          // Update the editingChallenge state to reflect the change
+          const updatedChallenge = {
+            ...editingChallenge,
+            sessions: editingChallenge.sessions.filter(s => s.id !== sessionId)
+          };
+          setEditingChallenge(updatedChallenge);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PageBackground>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: '500', color: '#333', mb: 4 }}>
@@ -453,6 +549,16 @@ const Challenges: React.FC = () => {
                               primary={`${session.order}. ${session.title}`}
                               secondary={session.description}
                             />
+                            <ListItemSecondaryAction>
+                              <IconButton
+                                edge="end"
+                                aria-label="delete"
+                                onClick={() => handleDeleteSession(session.id)}
+                                disabled={loading}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </ListItemSecondaryAction>
                           </ListItem>
                         ))}
                       </List>
@@ -467,6 +573,8 @@ const Challenges: React.FC = () => {
                         <Button
                           startIcon={<DeleteIcon />}
                           color="error"
+                          onClick={() => handleDeleteChallenge(challenge.id)}
+                          disabled={loading}
                         >
                           Delete
                         </Button>
@@ -507,11 +615,18 @@ const Challenges: React.FC = () => {
                     <Card sx={{ p: 2, mb: 2 }}>
                       <Typography variant="h6" gutterBottom>
                         Session {index + 1}
-                        {sessions.length > 1 && (
+                        {(sessions.length > 1 || editingChallenge?.sessions[index]?.id) && (
                           <IconButton
-                            onClick={() => handleRemoveSession(index)}
+                            onClick={() => {
+                              if (editingChallenge?.sessions[index]?.id) {
+                                handleDeleteSession(editingChallenge.sessions[index].id);
+                              } else {
+                                handleRemoveSession(index);
+                              }
+                            }}
                             sx={{ float: 'right' }}
                             color="error"
+                            disabled={loading}
                           >
                             <DeleteIcon />
                           </IconButton>
