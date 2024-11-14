@@ -9,6 +9,7 @@ import Content from './components/Content';
 import Categories from './components/Categories';
 import Box from '@mui/material/Box';
 import Login from './components/Login';
+import Challenges from './components/Challenges';
 
 const theme = createTheme({
   palette: {
@@ -61,6 +62,7 @@ const App: React.FC = () => {
               <Route path="/users" element={<Users />} />
               <Route path="/content" element={<Content />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/challenges" element={<Challenges />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Box>

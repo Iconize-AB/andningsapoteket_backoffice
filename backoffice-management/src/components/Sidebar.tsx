@@ -6,6 +6,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import CategoryIcon from '@mui/icons-material/Category';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 const drawerWidth = 240;
 
@@ -20,6 +21,7 @@ const menuItems: MenuItem[] = [
   { text: 'Users', icon: <PeopleIcon />, path: '/users' },
   { text: 'Content', icon: <ContentPasteIcon />, path: '/content' },
   { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
+  { text: 'Challenges', icon: <EmojiEventsIcon />, path: '/challenges' },
 ];
 
 interface SidebarProps {
@@ -41,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
       anchor="left"
     >
       <Typography variant="h6" sx={{ p: 2 }}>
-        filament
+        Andningsapoteket
       </Typography>
       <List>
         {menuItems.map((item) => (
