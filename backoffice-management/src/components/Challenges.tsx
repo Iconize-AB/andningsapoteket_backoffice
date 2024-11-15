@@ -16,9 +16,6 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   FormControlLabel,
   Switch,
 } from '@mui/material';
@@ -27,7 +24,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { ButtonProps } from '@mui/material/Button';
 import EditIcon from '@mui/icons-material/Edit';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddIcon from '@mui/icons-material/Add';
 
 interface SessionForm {
   title: string;
@@ -47,11 +44,11 @@ const initialSessionForm: SessionForm = {
   image: null,
 };
 
-const PageBackground = styled('div')({
-  backgroundColor: '#fff',
-  minHeight: '100vh',
-  padding: '24px',
-});
+const PageBackground = styled(Box)(({ theme }) => ({
+  maxWidth: 1200,
+  margin: '0 auto',
+  padding: theme.spacing(3),
+}));
 
 const StyledTextField = styled(TextField)({
   '& .MuiInputBase-input': {
@@ -77,15 +74,24 @@ interface UploadButtonProps extends ButtonProps {
   component?: React.ElementType;
 }
 
-const UploadButton = styled(Button)<UploadButtonProps>({
-  marginTop: '16px',
-  marginBottom: '8px',
-});
+const UploadButton = styled(Button)<UploadButtonProps>(({ theme }) => ({
+  textTransform: 'none',
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(1, 2),
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(1),
+  backgroundColor: theme.palette.grey[900],
+  color: theme.palette.common.white,
+  '&:hover': {
+    backgroundColor: theme.palette.grey[800],
+  },
+}));
 
 interface Challenge {
   id: string;
   title: string;
   description: string;
+  activated: boolean;
   sessions: {
     id: string;
     title: string;
@@ -96,41 +102,15 @@ interface Challenge {
   }[];
 }
 
-const StyledTab = styled(Tab)({
-  color: '#666',
+const StyledTab = styled(Tab)(({ theme }) => ({
+  textTransform: 'none',
+  borderRadius: theme.shape.borderRadius,
+  color: theme.palette.grey[700],
   '&.Mui-selected': {
-    color: '#1976d2',
-    fontWeight: 'bold',
-  },
-});
-
-const StyledAccordion = styled(Accordion)({
-  backgroundColor: '#fff',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  '&:before': {
-    display: 'none',
-  },
-  '&.Mui-expanded': {
-    margin: '16px 0',
-  },
-});
-
-const StyledAccordionSummary = styled(AccordionSummary)({
-  backgroundColor: '#f5f5f5',
-  '&.Mui-expanded': {
-    minHeight: '48px',
-  },
-  '& .MuiAccordionSummary-content': {
-    margin: '12px 0',
-    '&.Mui-expanded': {
-      margin: '12px 0',
-    },
-  },
-  '& .MuiTypography-root': {
+    color: theme.palette.grey[900],
     fontWeight: 500,
-    color: '#333',
   },
-});
+}));
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -218,6 +198,46 @@ const handleAddSessionToExistingChallenge = async (
     };
   }
 };
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: 'none',
+  border: `1px solid ${theme.palette.divider}`,
+  transition: 'box-shadow 0.3s ease-in-out',
+  '&:hover': {
+    boxShadow: theme.shadows[2],
+  },
+  backgroundColor: theme.palette.background.paper,
+}));
+
+const StyledButton = styled(Button)<ButtonProps>(({ theme }) => ({
+  textTransform: 'none',
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(1, 2),
+  fontWeight: 500,
+  backgroundColor: theme.palette.grey[900],
+  color: theme.palette.common.white,
+  '&:hover': {
+    backgroundColor: theme.palette.grey[800],
+  },
+  '&.MuiButton-outlined': {
+    backgroundColor: 'transparent',
+    borderColor: theme.palette.grey[700],
+    color: theme.palette.grey[700],
+    '&:hover': {
+      backgroundColor: theme.palette.grey[100],
+      borderColor: theme.palette.grey[900],
+      color: theme.palette.grey[900],
+    },
+  },
+  '&.MuiButton-containedError': {
+    backgroundColor: theme.palette.error.dark,
+    color: theme.palette.error.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.error.main,
+    },
+  },
+}));
 
 const Challenges: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
@@ -509,12 +529,49 @@ const Challenges: React.FC = () => {
     }
   };
 
+  // Add this new function inside the Challenges component
+  const handleToggleActivation = async (challengeId: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`http://localhost:3000/v1/challenges/toggle-activation/${challengeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle challenge activation');
+      }
+
+      const data = await response.json();
+      setSuccess(data.message);
+      
+      // Update the challenges list with the updated challenge data
+      setChallenges(challenges.map(challenge => 
+        challenge.id === challengeId ? data.challenge : challenge
+      ));
+    } catch (error) {
+      console.error('Error toggling challenge activation:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PageBackground>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: '500', color: '#333', mb: 4 }}>
         Challenge Management
       </Typography>
-      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
+      <StyledCard>
         <CardContent>
           <Tabs
             value={tabValue}
@@ -526,61 +583,81 @@ const Challenges: React.FC = () => {
               mb: 3
             }}
           >
-            <StyledTab label="Overview of Challenges" />
-            <StyledTab label={isEditing ? "Edit Challenge" : "Create New Challenge"} />
+            <StyledTab label="Overview" />
+            <StyledTab label={isEditing ? "Edit Challenge" : "Create Challenge"} />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               {challenges?.map((challenge) => (
-                <Grid item xs={12} key={challenge.id}>
-                  <StyledAccordion>
-                    <StyledAccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h6">{challenge.title}</Typography>
-                    </StyledAccordionSummary>
-                    <AccordionDetails>
-                      <Typography variant="body1" gutterBottom>
+                <Grid item xs={12} sm={6} md={4} key={challenge.id}>
+                  <StyledCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                        {challenge.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {challenge.description}
                       </Typography>
-                      <List>
+                      <Box sx={{ mb: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={challenge.activated}
+                              onChange={() => handleToggleActivation(challenge.id)}
+                              disabled={loading}
+                            />
+                          }
+                          label={challenge.activated ? "Active" : "Inactive"}
+                        />
+                      </Box>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Sessions ({challenge.sessions.length}):
+                      </Typography>
+                      <List dense>
                         {challenge.sessions.map((session) => (
-                          <ListItem key={session.id}>
+                          <ListItem key={session.id} sx={{ px: 0 }}>
                             <ListItemText
-                              primary={`${session.order}. ${session.title}`}
-                              secondary={session.description}
+                              primary={session.title}
+                              secondary={`Order: ${session.order}`}
+                              primaryTypographyProps={{ variant: 'body2' }}
+                              secondaryTypographyProps={{ variant: 'caption' }}
                             />
                             <ListItemSecondaryAction>
                               <IconButton
                                 edge="end"
-                                aria-label="delete"
+                                size="small"
                                 onClick={() => handleDeleteSession(session.id)}
                                 disabled={loading}
                               >
-                                <DeleteIcon />
+                                <DeleteIcon fontSize="small" />
                               </IconButton>
                             </ListItemSecondaryAction>
                           </ListItem>
                         ))}
                       </List>
-                      <Box sx={{ mt: 2 }}>
-                        <Button
+                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <StyledButton
                           startIcon={<EditIcon />}
-                          sx={{ mr: 1 }}
                           onClick={() => handleEditClick(challenge)}
+                          variant="outlined"
+                          size="small"
                         >
                           Edit
-                        </Button>
-                        <Button
+                        </StyledButton>
+                        <StyledButton
                           startIcon={<DeleteIcon />}
-                          color="error"
                           onClick={() => handleDeleteChallenge(challenge.id)}
                           disabled={loading}
+                          color="error"
+                          variant="contained"
+                          size="small"
                         >
                           Delete
-                        </Button>
+                        </StyledButton>
                       </Box>
-                    </AccordionDetails>
-                  </StyledAccordion>
+                    </CardContent>
+                  </StyledCard>
                 </Grid>
               ))}
             </Grid>
@@ -710,26 +787,31 @@ const Challenges: React.FC = () => {
                 ))}
 
                 <Grid item xs={12}>
-                  <Button
+                  <StyledButton
                     variant="outlined"
                     onClick={handleAddSession}
+                    startIcon={<AddIcon />}
                     sx={{ mr: 2 }}
                   >
                     Add Session
-                  </Button>
-                  <Button
+                  </StyledButton>
+                  <StyledButton
                     type="submit"
                     variant="contained"
                     disabled={loading}
                   >
-                    {loading ? <CircularProgress size={24} /> : isEditing ? "Update Challenge" : "Create Challenge"}
-                  </Button>
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'common.white' }} />
+                    ) : (
+                      isEditing ? "Update Challenge" : "Create Challenge"
+                    )}
+                  </StyledButton>
                 </Grid>
               </Grid>
             </form>
           </TabPanel>
         </CardContent>
-      </Card>
+      </StyledCard>
 
       {error && (
         <Box sx={{ mt: 2 }}>
