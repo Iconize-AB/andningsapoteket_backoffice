@@ -153,51 +153,51 @@ const getAudioDuration = (file: File): Promise<string> => {
 };
 
 // Modified function to handle adding sessions to an existing challenge
-const handleAddSessionToExistingChallenge = async (
-  newSession: SessionForm, 
-  challengeId: string,
-  token: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const formData = new FormData();
+// const handleAddSessionToExistingChallenge = async (
+//   newSession: SessionForm, 
+//   challengeId: string,
+//   token: string
+// ): Promise<{ success: boolean; error?: string }> => {
+//   try {
+//     const formData = new FormData();
     
-    // Only append the new session data
-    if (newSession.audio) {
-      formData.append('audio', newSession.audio);
-    }
-    if (newSession.image) {
-      formData.append('image', newSession.image);
-    }
+//     // Only append the new session data
+//     if (newSession.audio) {
+//       formData.append('audio', newSession.audio);
+//     }
+//     if (newSession.image) {
+//       formData.append('image', newSession.image);
+//     }
     
-    // Add session details
-    formData.append('session', JSON.stringify({
-      title: newSession.title,
-      description: newSession.description,
-      longDescription: newSession.longDescription,
-      duration: newSession.duration,
-    }));
+//     // Add session details
+//     formData.append('session', JSON.stringify({
+//       title: newSession.title,
+//       description: newSession.description,
+//       longDescription: newSession.longDescription,
+//       duration: newSession.duration,
+//     }));
 
-    const response = await fetch(`http://localhost:3000/v1/challenges/${challengeId}/sessions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData,
-    });
+//     const response = await fetch(`http://localhost:3000/v1/challenges/${challengeId}/sessions`, {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//       },
+//       body: formData,
+//     });
 
-    if (!response.ok) {
-      throw new Error('Failed to add session to challenge');
-    }
+//     if (!response.ok) {
+//       throw new Error('Failed to add session to challenge');
+//     }
 
-    await response.json();
-    return { success: true };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred'
-    };
-  }
-};
+//     await response.json();
+//     return { success: true };
+//   } catch (error) {
+//     return { 
+//       success: false, 
+//       error: error instanceof Error ? error.message : 'An unexpected error occurred'
+//     };
+//   }
+// };
 
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,

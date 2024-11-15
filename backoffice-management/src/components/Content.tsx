@@ -469,64 +469,64 @@ const Content: React.FC = () => {
     }
   };
 
-  const handleSaveEdit = async () => {
-    if (!selectedSession) return;
+  // const handleSaveEdit = async () => {
+  //   if (!selectedSession) return;
 
-    try {
-      const token = localStorage.getItem("userToken");
-      if (!token) throw new Error("No authentication token found");
+  //   try {
+  //     const token = localStorage.getItem("userToken");
+  //     if (!token) throw new Error("No authentication token found");
 
-      const requestBody = {
-        title: selectedSession.title,
-        description: selectedSession.description,
-        category: selectedSession.category,
-        categories: JSON.stringify(selectedSession.categories),
-        activated: selectedSession.activated,
-        highlighted: selectedSession.highlighted
-      };
+  //     const requestBody = {
+  //       title: selectedSession.title,
+  //       description: selectedSession.description,
+  //       category: selectedSession.category,
+  //       categories: JSON.stringify(selectedSession.categories),
+  //       activated: selectedSession.activated,
+  //       highlighted: selectedSession.highlighted
+  //     };
 
-      const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/update/${selectedSession.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+  //     const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/update/${selectedSession.id}`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify(requestBody),
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update session");
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to update session");
+  //     }
 
-      const updatedSession = await response.json();
+  //     const updatedSession = await response.json();
       
-      setSessions((prevSessions: GroupedSessions) => {
-        const newSessions: GroupedSessions = { ...prevSessions };
+  //     setSessions((prevSessions: GroupedSessions) => {
+  //       const newSessions: GroupedSessions = { ...prevSessions };
         
-        // Remove from old category if category changed
-        Object.keys(newSessions).forEach((category: string) => {
-          newSessions[category] = newSessions[category].filter((session: Session) =>
-            session.id !== selectedSession.id
-          );
-        });
+  //       // Remove from old category if category changed
+  //       Object.keys(newSessions).forEach((category: string) => {
+  //         newSessions[category] = newSessions[category].filter((session: Session) =>
+  //           session.id !== selectedSession.id
+  //         );
+  //       });
         
-        // Add to new/current category
-        const category = updatedSession.session.category;
-        if (!newSessions[category]) {
-          newSessions[category] = [];
-        }
-        newSessions[category] = [...newSessions[category], updatedSession.session];
-        return newSessions;
-      });
+  //       // Add to new/current category
+  //       const category = updatedSession.session.category;
+  //       if (!newSessions[category]) {
+  //         newSessions[category] = [];
+  //       }
+  //       newSessions[category] = [...newSessions[category], updatedSession.session];
+  //       return newSessions;
+  //     });
 
-      setIsEditing(false);
-      setSelectedSession(null);
-    } catch (error) {
-      console.error("Error updating session:", error);
-      setError(error instanceof Error ? error.message : "An unexpected error occurred");
-    }
-  };
+  //     setIsEditing(false);
+  //     setSelectedSession(null);
+  //   } catch (error) {
+  //     console.error("Error updating session:", error);
+  //     setError(error instanceof Error ? error.message : "An unexpected error occurred");
+  //   }
+  // };
 
   if (loading) {
     return (
