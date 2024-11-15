@@ -1,6 +1,15 @@
 import React from 'react';
-import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Typography, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { 
+  Drawer, 
+  List, 
+  ListItemButton, 
+  ListItemIcon, 
+  ListItemText, 
+  Typography, 
+  Button,
+  styled
+} from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
@@ -28,39 +37,77 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
+const StyledDrawer = styled(Drawer)(({ theme }) => ({
+  width: drawerWidth,
+  flexShrink: 0,
+  '& .MuiDrawer-paper': {
+    width: drawerWidth,
+    boxSizing: 'border-box',
+    backgroundColor: theme.palette.grey[900],
+    color: theme.palette.common.white,
+  },
+}));
+
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  margin: '4px 8px',
+  '&.Mui-selected': {
+    backgroundColor: theme.palette.action.selected,
+  },
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
+const StyledListItemIcon = styled(ListItemIcon)(({ theme }) => ({
+  color: theme.palette.grey[400],
+  minWidth: 40,
+}));
+
+const StyledListItemText = styled(ListItemText)(({ theme }) => ({
+  '& .MuiListItemText-primary': {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+  },
+}));
+
+const LogoutButton = styled(Button)(({ theme }) => ({
+  margin: theme.spacing(2),
+  color: theme.palette.grey[400],
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
 const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   return (
-    <Drawer
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: drawerWidth,
-          boxSizing: 'border-box',
-        },
-      }}
-      variant="permanent"
-      anchor="left"
-    >
-      <Typography variant="h6" sx={{ p: 2 }}>
+    <StyledDrawer variant="permanent" anchor="left">
+      <Typography variant="h6" sx={{ p: 2, color: 'common.white' }}>
         Andningsapoteket
       </Typography>
       <List>
         {menuItems.map((item) => (
-          <ListItemButton key={item.text} component={Link} to={item.path}>
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItemButton>
+          <StyledListItemButton
+            key={item.text}
+            onClick={() => navigate(item.path)}
+            selected={location.pathname === item.path}
+          >
+            <StyledListItemIcon>{item.icon}</StyledListItemIcon>
+            <StyledListItemText primary={item.text} />
+          </StyledListItemButton>
         ))}
       </List>
-      <Button
+      <LogoutButton
         startIcon={<ExitToAppIcon />}
         onClick={onLogout}
-        sx={{ mt: 'auto', mb: 2, mx: 2 }}
+        sx={{ mt: 'auto' }}
       >
         Logout
-      </Button>
-    </Drawer>
+      </LogoutButton>
+    </StyledDrawer>
   );
 }
 

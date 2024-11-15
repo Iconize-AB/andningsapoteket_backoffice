@@ -41,32 +41,27 @@ const App: React.FC = () => {
     setToken(null);
   };
 
-  if (!token) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Login onLogin={handleLogin} />
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Box sx={{ display: 'flex' }}>
-          <Sidebar onLogout={handleLogout} />
-          <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/content" element={<Content />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/challenges" element={<Challenges />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+        {!token ? (
+          <Login onLogin={handleLogin} />
+        ) : (
+          <Box sx={{ display: 'flex' }}>
+            <Sidebar onLogout={handleLogout} />
+            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/content" element={<Content />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/challenges" element={<Challenges />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Box>
           </Box>
-        </Box>
+        )}
       </Router>
     </ThemeProvider>
   );
