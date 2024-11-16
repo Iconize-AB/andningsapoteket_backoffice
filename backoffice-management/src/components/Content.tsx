@@ -27,12 +27,15 @@ import {
   styled,
 } from '@mui/material';
 import { Edit, Delete, CloudUpload, Star, Save } from '@mui/icons-material';
-
 interface Session {
   id: string;
   title: string;
   description: string;
-  category: string;
+  category: {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+  };
   categories: string[];
   activated: boolean;
   highlighted: boolean;
@@ -41,7 +44,7 @@ interface Session {
 interface NewSession {
   title: string;
   description: string;
-  category: string;
+  categoryId: string;
   categories: string;
   audio: File | null;
   image: File | null;
@@ -62,6 +65,12 @@ interface ExtendedButtonProps {
 
 interface GroupedSessions {
   [key: string]: Session[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  imageUrl: string | null;
 }
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -126,6 +135,17 @@ const TabButton = styled(Button)<{ active?: boolean }>(({ theme, active }) => ({
   },
 }));
 
+const CategoryTag = styled(Typography)(({ theme }) => ({
+  display: 'inline-block',
+  padding: theme.spacing(0.5, 1),
+  marginRight: theme.spacing(1),
+  marginBottom: theme.spacing(0.5),
+  backgroundColor: theme.palette.grey[100],
+  borderRadius: theme.shape.borderRadius,
+  fontSize: '0.75rem',
+  color: theme.palette.text.secondary,
+}));
+
 const Content: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [sessions, setSessions] = useState<GroupedSessions>({});
@@ -134,7 +154,7 @@ const Content: React.FC = () => {
   const [newSession, setNewSession] = useState<NewSession>({
     title: '',
     description: '',
-    category: '',
+    categoryId: '',
     categories: '',
     audio: null,
     image: null,
@@ -152,11 +172,13 @@ const Content: React.FC = () => {
   const [newHelpOption, setNewHelpOption] = useState<string>('');
   const [helpContent, setHelpContent] = useState<string>('');
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     fetchSessions();
     fetchHighlightedSessions();
     fetchHelpOptionContents();
+    fetchCategories();
   }, []);
 
   const fetchSessions = async () => {
@@ -164,7 +186,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/all", {
+      const response = await fetch("http://localhost:3000/v1/backoffice/sessions/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -176,10 +198,11 @@ const Content: React.FC = () => {
 
       const groupedSessions = data?.items?.reduce(
         (acc: GroupedSessions, session: Session) => {
-          if (!acc[session.category]) {
-            acc[session.category] = [];
+          const categoryName = session?.category?.name;
+          if (!acc[categoryName]) {
+            acc[categoryName] = [];
           }
-          acc[session.category].push(session);
+          acc[categoryName].push(session);
           return acc;
         },
         {}
@@ -198,7 +221,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/highlighted', {
+      const response = await fetch('http://localhost:3000/v1/backoffice/sessions/highlighted', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -216,7 +239,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/help-option-contents', {
+      const response = await fetch('http://localhost:3000/v1/backoffice/help-option-contents', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -226,6 +249,26 @@ const Content: React.FC = () => {
       setHelpOptionContents(data.contents || []);
     } catch (error) {
       console.error('Error fetching help option contents:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await fetch('http://localhost:3000/v1/backoffice/categories', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch categories');
+
+      const data = await response.json();
+      setCategories(data.categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -259,7 +302,7 @@ const Content: React.FC = () => {
         }
       });
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/upload', {
+      const response = await fetch('http://localhost:3000/v1/backoffice/sessions/upload', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -269,8 +312,16 @@ const Content: React.FC = () => {
 
       await fetchSessions();
       setNewSession({
-        title: '', description: '', category: '', categories: '', audio: null, 
-        image: null, duration: '', activated: true, startQuestion: '', endQuestion: ''
+        title: '', 
+        description: '', 
+        categoryId: '', 
+        categories: '', 
+        audio: null, 
+        image: null, 
+        duration: '', 
+        activated: true, 
+        startQuestion: '', 
+        endQuestion: ''
       });
       setActiveTab(0);
     } catch (error) {
@@ -315,7 +366,7 @@ const Content: React.FC = () => {
         highlighted: selectedSession.highlighted
       };
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/update/${selectedSession.id}`, {
+      const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/update/${selectedSession.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -332,13 +383,46 @@ const Content: React.FC = () => {
       const updatedSession = await response.json();
       
       setSessions((prevSessions: GroupedSessions) => {
-        const newSessions = { ...prevSessions };
-        const category = updatedSession.session.category;
-        if (newSessions[category]) {
-          newSessions[category] = newSessions[category].map((session: Session) =>
-            session.id === updatedSession.session.id ? updatedSession.session : session
-          );
+        const newSessions: GroupedSessions = { ...prevSessions };
+        
+        // Add safety checks and logging
+        if (!updatedSession) {
+          console.error('Updated session is undefined');
+          return prevSessions;
         }
+
+        // Log the structure to debug
+        console.log('Updated session:', updatedSession);
+
+        // Check the response structure and access the correct path
+        const categoryName = updatedSession.session?.category?.name || updatedSession.category?.name;
+        
+        if (!categoryName) {
+          console.error('Could not find category name in the updated session:', updatedSession);
+          return prevSessions;
+        }
+
+        // Remove from old category if category changed
+        Object.keys(newSessions).forEach((category: string) => {
+          newSessions[category] = newSessions[category].filter(
+            (session: Session) => session.id !== selectedSession.id
+          );
+          
+          // Clean up empty categories
+          if (newSessions[category].length === 0) {
+            delete newSessions[category];
+          }
+        });
+
+        // Add to new/current category
+        if (!newSessions[categoryName]) {
+          newSessions[categoryName] = [];
+        }
+        
+        // Add the session with the correct structure
+        const sessionToAdd = updatedSession.session || updatedSession;
+        newSessions[categoryName].push(sessionToAdd);
+
         return newSessions;
       });
       
@@ -358,7 +442,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/delete/${selectedSession.id}`, {
+      const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/delete/${selectedSession.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -367,9 +451,9 @@ const Content: React.FC = () => {
 
       setSessions((prevSessions: GroupedSessions) => {
         const newSessions = { ...prevSessions };
-        const category = selectedSession.category;
-        if (newSessions[category]) {
-          newSessions[category] = newSessions[category].filter(
+        const categoryName = selectedSession?.category?.name;
+        if (newSessions[categoryName]) {
+          newSessions[categoryName] = newSessions[categoryName].filter(
             (session: Session) => session.id !== selectedSession.id
           );
         }
@@ -388,7 +472,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/toggle-highlight/${sessionId}`, {
+      const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/toggle-highlight/${sessionId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -397,22 +481,29 @@ const Content: React.FC = () => {
 
       if (!response.ok) throw new Error("Failed to toggle session highlight");
 
-      const updatedSession = await response.json();
-
-      // Update the sessions state
+      // Update the sessions state with the new highlighted value
       setSessions((prevSessions: GroupedSessions) => {
         const newSessions = { ...prevSessions };
-        const category = updatedSession.session.category;
-        if (newSessions[category]) {
-          newSessions[category] = newSessions[category].map((session: Session) =>
-            session.id === updatedSession.session.id ? updatedSession.session : session
+        Object.keys(newSessions).forEach(categoryName => {
+          newSessions[categoryName] = newSessions[categoryName].map((session: Session) =>
+            session.id === sessionId ? { ...session, highlighted: !session.highlighted } : session
           );
-        }
+        });
         return newSessions;
       });
 
-      // Update highlighted sessions
-      await fetchHighlightedSessions();
+      // Update highlighted sessions immediately
+      setHighlightedSessions(prev => {
+        const isCurrentlyHighlighted = prev.some(session => session.id === sessionId);
+        if (isCurrentlyHighlighted) {
+          return prev.filter(session => session.id !== sessionId);
+        } else {
+          const sessionToAdd = Object.values(sessions)
+            .flat()
+            .find(session => session.id === sessionId);
+          return sessionToAdd ? [...prev, { ...sessionToAdd, highlighted: true }] : prev;
+        }
+      });
     } catch (error) {
       console.error("Error toggling session highlight:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred");
@@ -429,7 +520,7 @@ const Content: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/update-help-option-content', {
+      const response = await fetch('http://localhost:3000/v1/backoffice/update-help-option-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +544,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
+      const response = await fetch(`http://localhost:3000/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -469,65 +560,6 @@ const Content: React.FC = () => {
     }
   };
 
-  // const handleSaveEdit = async () => {
-  //   if (!selectedSession) return;
-
-  //   try {
-  //     const token = localStorage.getItem("userToken");
-  //     if (!token) throw new Error("No authentication token found");
-
-  //     const requestBody = {
-  //       title: selectedSession.title,
-  //       description: selectedSession.description,
-  //       category: selectedSession.category,
-  //       categories: JSON.stringify(selectedSession.categories),
-  //       activated: selectedSession.activated,
-  //       highlighted: selectedSession.highlighted
-  //     };
-
-  //     const response = await fetch(`http://localhost:3000/v1/backoffice/sessions/update/${selectedSession.id}`, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify(requestBody),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.error || "Failed to update session");
-  //     }
-
-  //     const updatedSession = await response.json();
-      
-  //     setSessions((prevSessions: GroupedSessions) => {
-  //       const newSessions: GroupedSessions = { ...prevSessions };
-        
-  //       // Remove from old category if category changed
-  //       Object.keys(newSessions).forEach((category: string) => {
-  //         newSessions[category] = newSessions[category].filter((session: Session) =>
-  //           session.id !== selectedSession.id
-  //         );
-  //       });
-        
-  //       // Add to new/current category
-  //       const category = updatedSession.session.category;
-  //       if (!newSessions[category]) {
-  //         newSessions[category] = [];
-  //       }
-  //       newSessions[category] = [...newSessions[category], updatedSession.session];
-  //       return newSessions;
-  //     });
-
-  //     setIsEditing(false);
-  //     setSelectedSession(null);
-  //   } catch (error) {
-  //     console.error("Error updating session:", error);
-  //     setError(error instanceof Error ? error.message : "An unexpected error occurred");
-  //   }
-  // };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -541,7 +573,7 @@ const Content: React.FC = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
+    <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }} className="content-container">
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'text.primary', mb: 4 }}>
         Content Management
       </Typography>
@@ -563,7 +595,7 @@ const Content: React.FC = () => {
                     <ListItem key={session.id} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
                       <ListItemText 
                         primary={session.title} 
-                        secondary={`Category: ${session.category}`}
+                        secondary={`Category: ${session?.category?.name}`}
                         primaryTypographyProps={{ fontWeight: 500 }}
                       />
                       <ListItemSecondaryAction>
@@ -574,47 +606,67 @@ const Content: React.FC = () => {
                 </List>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary', mt: 4 }}>
-                  All Sessions
-                </Typography>
                 <Grid container spacing={2}>
-                  {Object.entries(sessions).map(([category, categorySessions]) => (
-                    <Grid item xs={12} key={category}>
-                      <Typography variant="h6" gutterBottom>{category}</Typography>
+                  {Object.entries(sessions).map(([categoryName, categorySessions]) => (
+                    <Grid item xs={12} key={categoryName}>
+                      <CategoryTag>
+                        {categoryName}
+                      </CategoryTag>
                       <Grid container spacing={2}>
-                        {categorySessions.map((session: Session) => (
+                        {categorySessions.map((session) => (
                           <Grid item xs={12} sm={6} md={4} key={session.id}>
                             <StyledCard 
-                              onClick={() => handleSessionClick(session)} 
-                              sx={{ cursor: 'pointer', height: '100%' }}
+                              onClick={() => handleSessionClick(session)}
+                              sx={{ 
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column'
+                              }}
                             >
-                              <CardContent>
-                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                              <CardContent sx={{ 
+                                flexGrow: 1,
+                                display: 'flex',
+                                flexDirection: 'column',
+                              }}>
+                                <Typography 
+                                  variant="h6" 
+                                  sx={{ 
+                                    mb: 1,
+                                    fontWeight: 500,
+                                  }}
+                                >
                                   {session.title}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                <Typography 
+                                  variant="body2" 
+                                  color="text.secondary"
+                                  sx={{
+                                    mb: 2,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                  }}
+                                >
                                   {session.description}
                                 </Typography>
-                                <Box sx={{ mb: 2 }}>
+                                <Box sx={{ 
+                                  mb: 'auto',
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                }}>
                                   {session.categories.map((category: string) => (
-                                    <Typography 
-                                      key={category} 
-                                      variant="caption" 
-                                      sx={{ 
-                                        mr: 1, 
-                                        p: 0.5, 
-                                        bgcolor: 'action.selected', 
-                                        borderRadius: 1 
-                                      }}
-                                    >
+                                    <CategoryTag key={category}>
                                       {category}
-                                    </Typography>
+                                    </CategoryTag>
                                   ))}
                                 </Box>
                                 <Box sx={{ 
+                                  mt: 2,
                                   display: 'flex', 
                                   alignItems: 'center', 
-                                  justifyContent: 'space-between' 
+                                  justifyContent: 'space-between',
                                 }}>
                                   <Switch
                                     checked={session.highlighted}
@@ -667,14 +719,14 @@ const Content: React.FC = () => {
                   <FormControl fullWidth>
                     <InputLabel>Main Category</InputLabel>
                     <StyledSelect
-                      value={newSession.category}
-                      onChange={(e) => setNewSession({ ...newSession, category: e.target.value as string })}
-                      name="category"
+                      value={newSession.categoryId}
+                      onChange={(e) => setNewSession({ ...newSession, categoryId: e.target.value as string })}
+                      name="categoryId"
                       required
                     >
-                      {['Fire', 'Earth', 'Water', 'Wind'].map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
                         </MenuItem>
                       ))}
                     </StyledSelect>

@@ -5,9 +5,9 @@ import {
   ListItemButton, 
   ListItemIcon, 
   ListItemText, 
-  Typography, 
   Button,
-  styled
+  styled,
+  Box
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -85,9 +85,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
 
   return (
     <StyledDrawer variant="permanent" anchor="left">
-      <Typography variant="h6" sx={{ p: 2, color: 'common.white' }}>
-        Andningsapoteket
-      </Typography>
+      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+        <img 
+          src={process.env.PUBLIC_URL + '/logo.png'}
+          alt="Andningsapoteket Logo" 
+          style={{
+            maxWidth: '60px',
+            height: 'auto',
+          }}
+        />
+      </Box>
       <List>
         {menuItems.map((item) => (
           <StyledListItemButton

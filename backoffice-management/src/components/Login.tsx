@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/user/signin', {
+      const response = await fetch('http://localhost:3000/v1/user/signin', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
