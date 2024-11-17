@@ -52,6 +52,7 @@ interface NewSession {
   activated: boolean;
   startQuestion: string;
   endQuestion: string;
+  author: string;
 }
 
 interface HelpOptionContent {
@@ -146,6 +147,19 @@ const CategoryTag = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
+const getAudioDuration = async (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.src = URL.createObjectURL(file);
+    audio.onloadedmetadata = () => {
+      URL.revokeObjectURL(audio.src);
+      const minutes = Math.floor(audio.duration / 60);
+      const seconds = Math.floor(audio.duration % 60);
+      resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    };
+  });
+};
+
 const Content: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [sessions, setSessions] = useState<GroupedSessions>({});
@@ -162,6 +176,7 @@ const Content: React.FC = () => {
     activated: true,
     startQuestion: '',
     endQuestion: '',
+    author: '',
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -321,7 +336,8 @@ const Content: React.FC = () => {
         duration: '', 
         activated: true, 
         startQuestion: '', 
-        endQuestion: ''
+        endQuestion: '', 
+        author: ''
       });
       setActiveTab(0);
     } catch (error) {
@@ -748,9 +764,12 @@ const Content: React.FC = () => {
                     style={{ display: 'none' }}
                     id="audio-file-upload"
                     type="file"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (file) setNewSession({ ...newSession, audio: file });
+                      if (file) {
+                        const duration = await getAudioDuration(file);
+                        setNewSession({ ...newSession, audio: file, duration });
+                      }
                     }}
                   />
                   <label htmlFor="audio-file-upload">
@@ -821,6 +840,16 @@ const Content: React.FC = () => {
                     multiline
                     rows={2}
                     helperText="Question to ask after the session ends (optional)"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    label="Author"
+                    name="author"
+                    value={newSession.author}
+                    onChange={handleInputChange}
+                    required
                   />
                 </Grid>
                 <Grid item xs={12}>

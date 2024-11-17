@@ -33,6 +33,7 @@ interface SessionForm {
   duration: string;
   audio: File | null;
   image: File | null;
+  author: string;
 }
 
 const initialSessionForm: SessionForm = {
@@ -42,6 +43,7 @@ const initialSessionForm: SessionForm = {
   duration: '',
   audio: null,
   image: null,
+  author: '',
 };
 
 const PageBackground = styled(Box)(({ theme }) => ({
@@ -99,6 +101,7 @@ interface Challenge {
     longDescription?: string;
     duration?: string;
     order: number;
+    author?: string;
   }[];
 }
 
@@ -347,11 +350,12 @@ const Challenges: React.FC = () => {
       duration: session.duration ?? '',
       audio: null,
       image: null,
+      author: session.author ?? '',
     }));
     setSessions(sessionForms);
     setEditingChallenge(challenge);
     setIsEditing(true);
-    setTabValue(1); // Switch to the create/edit tab
+    setTabValue(1);
   };
 
   // Modified handleSubmit to use the updated function
@@ -391,6 +395,7 @@ const Challenges: React.FC = () => {
           longDescription: session.longDescription,
           duration: session.duration,
           order: index + 1,
+          author: session.author,
         }))
       ));
 
@@ -619,7 +624,12 @@ const Challenges: React.FC = () => {
                           <ListItem key={session.id} sx={{ px: 0 }}>
                             <ListItemText
                               primary={session.title}
-                              secondary={`Order: ${session.order}`}
+                              secondary={
+                                <>
+                                  {`Order: ${session.order}`}
+                                  {session.author && ` • Author: ${session.author}`}
+                                </>
+                              }
                               primaryTypographyProps={{ variant: 'body2' }}
                               secondaryTypographyProps={{ variant: 'caption' }}
                             />
@@ -780,6 +790,15 @@ const Challenges: React.FC = () => {
                           {session.image && (
                             <Typography variant="body2">{session.image.name}</Typography>
                           )}
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StyledTextField
+                            fullWidth
+                            label="Author"
+                            value={session.author}
+                            onChange={(e) => handleSessionChange(index, 'author', e.target.value)}
+                            helperText="Name of the session author"
+                          />
                         </Grid>
                       </Grid>
                     </Card>

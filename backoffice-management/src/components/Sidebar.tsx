@@ -16,6 +16,7 @@ import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import CategoryIcon from '@mui/icons-material/Category';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import TimerIcon from '@mui/icons-material/Timer';
 
 const drawerWidth = 240;
 
@@ -31,6 +32,7 @@ const menuItems: MenuItem[] = [
   { text: 'Content', icon: <ContentPasteIcon />, path: '/content' },
   { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
   { text: 'Challenges', icon: <EmojiEventsIcon />, path: '/challenges' },
+  { text: 'Six Day Challenge', icon: <TimerIcon />, path: '/sixday' },
 ];
 
 interface SidebarProps {
