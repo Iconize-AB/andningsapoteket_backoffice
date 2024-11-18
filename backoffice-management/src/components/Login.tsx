@@ -21,6 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           "Content-Type": "application/json",
         },
         mode: 'cors',
+        referrerPolicy: 'unsafe-url',
         credentials: 'omit',
         body: JSON.stringify({
           email,
