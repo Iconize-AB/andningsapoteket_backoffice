@@ -60,7 +60,7 @@ const Categories: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://localhost:3000/v1/backoffice/categories', {
+      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/categories', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -92,7 +92,7 @@ const Categories: React.FC = () => {
         formData.append('image', selectedImage);
       }
 
-      const response = await fetch('http://localhost:3000/v1/backoffice/categories/create', {
+      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/categories/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -148,7 +148,7 @@ const Categories: React.FC = () => {
         formData.append('image', editImage);
       }
 
-      const response = await fetch(`http://localhost:3000/v1/backoffice/categories/update/${editingCategory.id}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/categories/update/${editingCategory.id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

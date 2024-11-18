@@ -180,7 +180,7 @@ const getAudioDuration = (file: File): Promise<string> => {
 //       duration: newSession.duration,
 //     }));
 
-//     const response = await fetch(`http://localhost:3000/v1/challenges/${challengeId}/sessions`, {
+//     const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/${challengeId}/sessions`, {
 //       method: 'POST',
 //       headers: {
 //         'Authorization': `Bearer ${token}`,
@@ -263,7 +263,7 @@ const Challenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://localhost:3000/v1/challenges/all', {
+      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/all', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -400,8 +400,8 @@ const Challenges: React.FC = () => {
       ));
 
       const url = isEditing && editingChallenge
-        ? `http://localhost:3000/v1/challenges/update/${editingChallenge.id}`
-        : 'http://localhost:3000/v1/challenges/create';
+        ? `http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/update/${editingChallenge.id}`
+        : 'http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/create';
 
       console.log('Sending files:', formData.getAll('audio'), formData.getAll('image')); // Debug log
 
@@ -453,7 +453,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:3000/v1/challenges/delete/${challengeId}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/delete/${challengeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -489,7 +489,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:3000/v1/challenges/session/delete/${sessionId}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/session/delete/${sessionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -545,7 +545,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:3000/v1/challenges/toggle-activation/${challengeId}`, {
+      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/toggle-activation/${challengeId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
