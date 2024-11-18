@@ -56,8 +56,10 @@ const Dashboard: React.FC = () => {
 
         const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/statistics/user-stats', {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+          },
+          mode: 'cors',
+          credentials: 'omit',
         });
 
         if (!response.ok) {

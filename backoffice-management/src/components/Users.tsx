@@ -204,6 +204,8 @@ const Users: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        mode: 'cors',
+        credentials: 'omit',
         body: JSON.stringify({ email }),
       });
 
@@ -236,6 +238,8 @@ const Users: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        mode: 'cors',
+        credentials: 'omit',
         body: JSON.stringify(newUser),
       });
 
@@ -271,8 +275,10 @@ const Users: React.FC = () => {
 
         const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/users/all', {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+          },
+          mode: 'cors',
+          credentials: 'omit',
         });
 
         if (!response.ok) {

@@ -20,6 +20,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         headers: {
           "Content-Type": "application/json",
         },
+        mode: 'cors',
+        credentials: 'omit',
         body: JSON.stringify({
           email,
           password,
