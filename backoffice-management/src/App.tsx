@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Login from './components/Login';
 import Challenges from './components/Challenges';
 import SixDayChallenges from './components/SixDayChallenges';
+import SubCategories from './components/SubCategories';
 
 const theme = createTheme({
   palette: {
@@ -55,8 +56,9 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/users" element={<Users />} />
-                <Route path="/content" element={<Content />} />
+                <Route path="/journeys" element={<Content />} />
                 <Route path="/categories" element={<Categories />} />
+                <Route path="/subcategories" element={<SubCategories />} />
                 <Route path="/challenges" element={<Challenges />} />
                 <Route path="/sixday" element={<SixDayChallenges />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

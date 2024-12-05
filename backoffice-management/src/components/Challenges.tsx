@@ -34,6 +34,9 @@ interface SessionForm {
   audio: File | null;
   image: File | null;
   author: string;
+  includeTheory: boolean;
+  theoryTitle: string;
+  theoryContent: string;
 }
 
 const initialSessionForm: SessionForm = {
@@ -44,6 +47,9 @@ const initialSessionForm: SessionForm = {
   audio: null,
   image: null,
   author: '',
+  includeTheory: false,
+  theoryTitle: '',
+  theoryContent: '',
 };
 
 const PageBackground = styled(Box)(({ theme }) => ({
@@ -180,7 +186,7 @@ const getAudioDuration = (file: File): Promise<string> => {
 //       duration: newSession.duration,
 //     }));
 
-//     const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/${challengeId}/sessions`, {
+//     const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/${challengeId}/sessions`, {
 //       method: 'POST',
 //       headers: {
 //         'Authorization': `Bearer ${token}`,
@@ -263,7 +269,7 @@ const Challenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/all', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/challenges/all', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -291,7 +297,11 @@ const Challenges: React.FC = () => {
     setSessions(sessions.filter((_, i) => i !== index));
   };
 
-  const handleSessionChange = (index: number, field: keyof SessionForm, value: string | File | null) => {
+  const handleSessionChange = (
+    index: number, 
+    field: keyof SessionForm, 
+    value: string | File | null | boolean
+  ) => {
     const newSessions = [...sessions];
     newSessions[index] = {
       ...newSessions[index],
@@ -351,6 +361,9 @@ const Challenges: React.FC = () => {
       audio: null,
       image: null,
       author: session.author ?? '',
+      includeTheory: false,
+      theoryTitle: '',
+      theoryContent: '',
     }));
     setSessions(sessionForms);
     setEditingChallenge(challenge);
@@ -396,12 +409,15 @@ const Challenges: React.FC = () => {
           duration: session.duration,
           order: index + 1,
           author: session.author,
+          includeTheory: session.includeTheory,
+          theoryTitle: session.theoryTitle,
+          theoryContent: session.theoryContent,
         }))
       ));
 
       const url = isEditing && editingChallenge
-        ? `http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/update/${editingChallenge.id}`
-        : 'http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/create';
+        ? `https://prodandningsapoteketbackoffice.online/v1/challenges/update/${editingChallenge.id}`
+        : 'https://prodandningsapoteketbackoffice.online/v1/challenges/create';
 
       console.log('Sending files:', formData.getAll('audio'), formData.getAll('image')); // Debug log
 
@@ -453,7 +469,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/delete/${challengeId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/delete/${challengeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -489,7 +505,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/session/delete/${sessionId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/session/delete/${sessionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -545,7 +561,7 @@ const Challenges: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/toggle-activation/${challengeId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/toggle-activation/${challengeId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -800,6 +816,43 @@ const Challenges: React.FC = () => {
                             helperText="Name of the session author"
                           />
                         </Grid>
+                        <Grid item xs={12}>
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={session.includeTheory}
+                                onChange={(e) => handleSessionChange(index, 'includeTheory', e.target.checked)}
+                              />
+                            }
+                            label="Include Theory Section"
+                          />
+                        </Grid>
+                        {session.includeTheory && (
+                          <>
+                            <Grid item xs={12}>
+                              <StyledTextField
+                                fullWidth
+                                label="Theory Title"
+                                value={session.theoryTitle}
+                                onChange={(e) => handleSessionChange(index, 'theoryTitle', e.target.value)}
+                                required={session.includeTheory}
+                                sx={{ mt: 2 }}
+                              />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <StyledTextField
+                                fullWidth
+                                label="Theory Content"
+                                value={session.theoryContent}
+                                onChange={(e) => handleSessionChange(index, 'theoryContent', e.target.value)}
+                                multiline
+                                rows={4}
+                                required={session.includeTheory}
+                                sx={{ mt: 2 }}
+                              />
+                            </Grid>
+                          </>
+                        )}
                       </Grid>
                     </Card>
                   </Grid>

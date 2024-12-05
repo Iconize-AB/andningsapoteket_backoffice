@@ -15,14 +15,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/user/signin', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/user/signin', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        mode: 'cors',
-        referrerPolicy: 'unsafe-url',
-        credentials: 'omit',
         body: JSON.stringify({
           email,
           password,

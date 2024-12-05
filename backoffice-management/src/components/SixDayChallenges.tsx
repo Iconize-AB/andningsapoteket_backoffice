@@ -190,7 +190,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/sixday/all', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/all', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -303,8 +303,8 @@ const SixDayChallenges: React.FC = () => {
       ));
 
       const url = isEditing && editingChallenge
-        ? `http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/sixday/update/${editingChallenge.id}`
-        : 'http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/sixday/create';
+        ? `https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/update/${editingChallenge.id}`
+        : 'https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/create';
 
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
@@ -338,7 +338,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/sixday/delete/${challengeId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/delete/${challengeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -367,7 +367,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/challenges/sixday/session/delete/${sessionId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/session/delete/${sessionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

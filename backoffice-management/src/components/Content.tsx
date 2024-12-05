@@ -25,6 +25,7 @@ import {
   DialogContentText,
   DialogTitle,
   styled,
+  Chip,
 } from '@mui/material';
 import { Edit, Delete, CloudUpload, Star, Save } from '@mui/icons-material';
 interface Session {
@@ -35,17 +36,22 @@ interface Session {
     id: string;
     name: string;
     imageUrl: string | null;
-  };
+  } | null;
   categories: string[];
+  subCategories: {
+    id: string;
+    name: string;
+  }[];
   activated: boolean;
   highlighted: boolean;
+  type: 'journey' | 'condition';
 }
 
 interface NewSession {
   title: string;
   description: string;
   categoryId: string;
-  categories: string;
+  subCategoryId: string;
   audio: File | null;
   image: File | null;
   duration: string;
@@ -53,6 +59,7 @@ interface NewSession {
   startQuestion: string;
   endQuestion: string;
   author: string;
+  type: 'journey' | 'condition';
 }
 
 interface HelpOptionContent {
@@ -72,6 +79,11 @@ interface Category {
   id: string;
   name: string;
   imageUrl: string | null;
+}
+
+interface SubCategory {
+  id: string;
+  name: string;
 }
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -147,6 +159,17 @@ const CategoryTag = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
+const TypeTag = styled(Typography)(({ theme }) => ({
+  display: 'inline-block',
+  padding: theme.spacing(0.5, 1),
+  marginBottom: theme.spacing(1),
+  backgroundColor: theme.palette.error.main,
+  color: theme.palette.error.contrastText,
+  borderRadius: theme.shape.borderRadius,
+  fontSize: '0.75rem',
+  fontWeight: 500,
+}));
+
 const getAudioDuration = async (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const audio = new Audio();
@@ -169,7 +192,7 @@ const Content: React.FC = () => {
     title: '',
     description: '',
     categoryId: '',
-    categories: '',
+    subCategoryId: '',
     audio: null,
     image: null,
     duration: '',
@@ -177,6 +200,7 @@ const Content: React.FC = () => {
     startQuestion: '',
     endQuestion: '',
     author: '',
+    type: 'journey',
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -188,12 +212,14 @@ const Content: React.FC = () => {
   const [helpContent, setHelpContent] = useState<string>('');
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 
   useEffect(() => {
     fetchSessions();
     fetchHighlightedSessions();
     fetchHelpOptionContents();
     fetchCategories();
+    fetchSubCategories();
   }, []);
 
   const fetchSessions = async () => {
@@ -201,7 +227,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch("http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/all", {
+      const response = await fetch("https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -213,14 +239,17 @@ const Content: React.FC = () => {
 
       const groupedSessions = data?.items?.reduce(
         (acc: GroupedSessions, session: Session) => {
-          const categoryName = session?.category?.name;
+          const categoryName = session.type === 'journey' 
+            ? (session?.category?.name || 'Uncategorized')
+            : 'Conditions';
+
           if (!acc[categoryName]) {
             acc[categoryName] = [];
           }
           acc[categoryName].push(session);
           return acc;
         },
-        {}
+        {} as GroupedSessions
       );
 
       setSessions(groupedSessions || {});
@@ -236,7 +265,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/highlighted', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/highlighted', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -254,7 +283,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/help-option-contents', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/help-option-contents', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -272,7 +301,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/categories', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/categories', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -284,6 +313,28 @@ const Content: React.FC = () => {
       setCategories(data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchSubCategories = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories', {
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch subcategories');
+
+      const data = await response.json();
+      setSubCategories(data.subCategories);
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
     }
   };
 
@@ -304,22 +355,27 @@ const Content: React.FC = () => {
       const formData = new FormData();
       Object.entries(newSession).forEach(([key, value]) => {
         if (value !== null) {
-          if (key === 'categories') {
-            formData.append(
-              key, 
-              JSON.stringify(value.split(',').map((cat: string) => cat.trim()))
-            );
-          } else if (key === 'audio' || key === 'image') {
-            if (value instanceof File) formData.append(key, value);
+          if (key === 'audio' || key === 'image') {
+            if (value instanceof File) {
+              if (key === 'image' && newSession.type === 'journey') {
+                formData.append(key, value);
+              } else if (key === 'audio') {
+                formData.append(key, value);
+              }
+            }
           } else {
             formData.append(key, value.toString());
           }
         }
       });
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/upload', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/upload', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        mode: 'cors',
+        credentials: 'omit',
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        },
         body: formData,
       });
 
@@ -330,14 +386,15 @@ const Content: React.FC = () => {
         title: '', 
         description: '', 
         categoryId: '', 
-        categories: '', 
+        subCategoryId: '', 
         audio: null, 
         image: null, 
         duration: '', 
         activated: true, 
         startQuestion: '', 
         endQuestion: '', 
-        author: ''
+        author: '',
+        type: 'journey',
       });
       setActiveTab(0);
     } catch (error) {
@@ -376,13 +433,18 @@ const Content: React.FC = () => {
       const requestBody = {
         title: selectedSession.title,
         description: selectedSession.description,
-        category: selectedSession.category,
-        categories: JSON.stringify(selectedSession.categories),
+        type: selectedSession.type,
+        categoryId: selectedSession.type === 'journey' ? selectedSession.category?.id : null,
+        subCategoryId: selectedSession.type === 'condition' 
+          ? selectedSession.subCategories.map(sc => sc.id) 
+          : [],
         activated: selectedSession.activated,
         highlighted: selectedSession.highlighted
       };
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/update/${selectedSession.id}`, {
+      console.log('Update request body:', requestBody);
+
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/update/${selectedSession.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -411,14 +473,11 @@ const Content: React.FC = () => {
         console.log('Updated session:', updatedSession);
 
         // Check the response structure and access the correct path
-        const categoryName = updatedSession.session?.category?.name || updatedSession.category?.name;
+        const categoryName = selectedSession.type === 'journey'
+          ? (selectedSession.category?.name || 'Uncategorized')
+          : 'Conditions';
         
-        if (!categoryName) {
-          console.error('Could not find category name in the updated session:', updatedSession);
-          return prevSessions;
-        }
-
-        // Remove from old category if category changed
+        // Remove from old category
         Object.keys(newSessions).forEach((category: string) => {
           newSessions[category] = newSessions[category].filter(
             (session: Session) => session.id !== selectedSession.id
@@ -445,6 +504,7 @@ const Content: React.FC = () => {
       setIsEditing(false);
       setOpenSessionDialog(false);
     } catch (error) {
+      console.error('Update error:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
@@ -458,7 +518,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/delete/${selectedSession.id}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/delete/${selectedSession.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -467,12 +527,19 @@ const Content: React.FC = () => {
 
       setSessions((prevSessions: GroupedSessions) => {
         const newSessions = { ...prevSessions };
-        const categoryName = selectedSession?.category?.name;
-        if (newSessions[categoryName]) {
+        const categoryName = selectedSession?.category?.name || 'uncategorized';
+        
+        if (categoryName && newSessions[categoryName]) {
           newSessions[categoryName] = newSessions[categoryName].filter(
             (session: Session) => session.id !== selectedSession.id
           );
+          
+          // Clean up empty categories
+          if (newSessions[categoryName].length === 0) {
+            delete newSessions[categoryName];
+          }
         }
+        
         return newSessions;
       });
 
@@ -488,7 +555,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/sessions/toggle-highlight/${sessionId}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/toggle-highlight/${sessionId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -536,7 +603,7 @@ const Content: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/update-help-option-content', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/update-help-option-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -560,7 +627,7 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -591,11 +658,11 @@ const Content: React.FC = () => {
   return (
     <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }} className="content-container">
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'text.primary', mb: 4 }}>
-        Content Management
+        Journey Management
       </Typography>
       <Box sx={{ mb: 3 }}>
-        <TabButton active={activeTab === 0} onClick={() => setActiveTab(0)}>Sessions</TabButton>
-        <TabButton active={activeTab === 1} onClick={() => setActiveTab(1)}>Upload New Session</TabButton>
+        <TabButton active={activeTab === 0} onClick={() => setActiveTab(0)}>Journeys</TabButton>
+        <TabButton active={activeTab === 1} onClick={() => setActiveTab(1)}>Upload New Journey</TabButton>
         <TabButton active={activeTab === 2} onClick={() => setActiveTab(2)}>Help Content</TabButton>
       </Box>
       <StyledCard>
@@ -644,6 +711,9 @@ const Content: React.FC = () => {
                                 display: 'flex',
                                 flexDirection: 'column',
                               }}>
+                                <TypeTag>
+                                  {session.type}
+                                </TypeTag>
                                 <Typography 
                                   variant="h6" 
                                   sx={{ 
@@ -672,7 +742,7 @@ const Content: React.FC = () => {
                                   display: 'flex',
                                   flexWrap: 'wrap',
                                 }}>
-                                  {session.categories.map((category: string) => (
+                                  {session?.categories?.map((category: string) => (
                                     <CategoryTag key={category}>
                                       {category}
                                     </CategoryTag>
@@ -710,6 +780,63 @@ const Content: React.FC = () => {
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Session Type</InputLabel>
+                    <StyledSelect
+                      value={newSession.type}
+                      onChange={(e) => setNewSession({ ...newSession, type: e.target.value as 'journey' | 'condition' })}
+                      name="type"
+                      required
+                    >
+                      <MenuItem value="journey">Journey</MenuItem>
+                      <MenuItem value="condition">Condition</MenuItem>
+                    </StyledSelect>
+                  </FormControl>
+                </Grid>
+
+                {newSession.type === 'journey' && (
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Main Category</InputLabel>
+                      <StyledSelect
+                        value={newSession.categoryId}
+                        onChange={(e) => setNewSession({ ...newSession, categoryId: e.target.value as string })}
+                        name="categoryId"
+                        required
+                      >
+                        {categories.map((category) => (
+                          <MenuItem key={category.id} value={category.id}>
+                            {category.name}
+                          </MenuItem>
+                        ))}
+                      </StyledSelect>
+                    </FormControl>
+                  </Grid>
+                )}
+
+                {newSession.type === 'condition' && (
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Subcategory</InputLabel>
+                      <StyledSelect
+                        value={newSession.subCategoryId}
+                        onChange={(e) => {
+                          const value = e.target.value as string;
+                          setNewSession(prev => ({ ...prev, subCategoryId: value }));
+                        }}
+                        required
+                      >
+                        {subCategories.map((subCategory) => (
+                          <MenuItem key={subCategory.id} value={subCategory.id}>
+                            {subCategory.name}
+                          </MenuItem>
+                        ))}
+                      </StyledSelect>
+                    </FormControl>
+                  </Grid>
+                )}
+
+                <Grid item xs={12}>
                   <StyledTextField
                     fullWidth
                     label="Session Title"
@@ -729,33 +856,6 @@ const Content: React.FC = () => {
                     multiline
                     rows={4}
                     required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Main Category</InputLabel>
-                    <StyledSelect
-                      value={newSession.categoryId}
-                      onChange={(e) => setNewSession({ ...newSession, categoryId: e.target.value as string })}
-                      name="categoryId"
-                      required
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category.id} value={category.id}>
-                          {category.name}
-                        </MenuItem>
-                      ))}
-                    </StyledSelect>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <StyledTextField
-                    fullWidth
-                    label="Additional Categories"
-                    name="categories"
-                    value={newSession.categories}
-                    onChange={handleInputChange}
-                    helperText="Enter categories separated by commas"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -783,28 +883,30 @@ const Content: React.FC = () => {
                     </Typography>
                   )}
                 </Grid>
-                <Grid item xs={12}>
-                  <input
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    id="image-file-upload"
-                    type="file"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setNewSession({ ...newSession, image: file });
-                    }}
-                  />
-                  <label htmlFor="image-file-upload">
-                    <StyledButton variant="outlined" component="span" startIcon={<CloudUpload />}>
-                      Upload Image
-                    </StyledButton>
-                  </label>
-                  {newSession.image && (
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {newSession.image.name}
-                    </Typography>
-                  )}
-                </Grid>
+                {newSession.type === 'journey' && (
+                  <Grid item xs={12}>
+                    <input
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="image-file-upload"
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setNewSession({ ...newSession, image: file });
+                      }}
+                    />
+                    <label htmlFor="image-file-upload">
+                      <StyledButton variant="outlined" component="span" startIcon={<CloudUpload />}>
+                        Upload Image
+                      </StyledButton>
+                    </label>
+                    {newSession.image && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {newSession.image.name}
+                      </Typography>
+                    )}
+                  </Grid>
+                )}
                 <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel>Activate session</InputLabel>
@@ -959,6 +1061,22 @@ const Content: React.FC = () => {
             <DialogContent>
               {isEditing ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Session Type</InputLabel>
+                    <StyledSelect
+                      value={selectedSession.type || 'journey'}
+                      onChange={(e) => setSelectedSession({ 
+                        ...selectedSession, 
+                        type: e.target.value as 'journey' | 'condition',
+                        category: e.target.value === 'condition' ? null : selectedSession.category,
+                        subCategories: e.target.value === 'journey' ? [] : selectedSession.subCategories
+                      })}
+                    >
+                      <MenuItem value="journey">Journey</MenuItem>
+                      <MenuItem value="condition">Condition</MenuItem>
+                    </StyledSelect>
+                  </FormControl>
+
                   <StyledTextField
                     fullWidth
                     label="Title"
@@ -975,13 +1093,75 @@ const Content: React.FC = () => {
                     multiline
                     rows={4}
                   />
-                  <StyledTextField
-                    fullWidth
-                    label="Categories"
-                    value={selectedSession.categories.join(", ")}
-                    onChange={(e) => setSelectedSession({ ...selectedSession, categories: e.target.value.split(", ") })}
-                    margin="normal"
-                  />
+
+                  {selectedSession.type === 'journey' && (
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel>Category</InputLabel>
+                      <StyledSelect
+                        value={selectedSession.category?.id || ''}
+                        onChange={(e) => {
+                          const categoryId = e.target.value as string;
+                          const category = categories.find(c => c.id === categoryId);
+                          setSelectedSession({
+                            ...selectedSession,
+                            category: category ? {
+                              id: category.id,
+                              name: category.name,
+                              imageUrl: category.imageUrl
+                            } : null
+                          } as Session);
+                        }}
+                      >
+                        {categories.map((category) => (
+                          <MenuItem key={category.id} value={category.id}>
+                            {category.name}
+                          </MenuItem>
+                        ))}
+                      </StyledSelect>
+                    </FormControl>
+                  )}
+
+                  {selectedSession.type === 'condition' && (
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel>Subcategories</InputLabel>
+                      <StyledSelect
+                        multiple
+                        value={selectedSession.subCategories?.map(sc => sc.id) || []}
+                        onChange={(e) => {
+                          const selectedIds = e.target.value as string[];
+                          const selectedSubCategories = selectedIds.map(id => {
+                            const subCat = subCategories.find(sc => sc.id === id);
+                            return {
+                              id: id,
+                              name: subCat?.name || ''
+                            } as SubCategory;
+                          });
+                          setSelectedSession({
+                            ...selectedSession,
+                            subCategories: selectedSubCategories
+                          } as Session);
+                        }}
+                        renderValue={(selected) => (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {(selectedSession.subCategories || []).map((subCat: SubCategory) => (
+                              <Chip 
+                                key={subCat.id} 
+                                label={subCat.name} 
+                                size="small"
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      >
+                        {subCategories.map((subCategory: SubCategory) => (
+                          <MenuItem key={subCategory.id} value={subCategory.id}>
+                            {subCategory.name}
+                          </MenuItem>
+                        ))}
+                      </StyledSelect>
+                    </FormControl>
+                  )}
+
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Activated</InputLabel>
                     <StyledSelect
@@ -1009,13 +1189,27 @@ const Content: React.FC = () => {
               ) : (
                 <>
                   <Typography variant="body2" paragraph>{selectedSession.description}</Typography>
-                  <Box sx={{ mb: 2 }}>
-                    {selectedSession.categories.map((cat) => (
-                      <Typography key={cat} variant="caption" sx={{ mr: 1, p: 0.5, bgcolor: 'action.selected', borderRadius: 1 }}>
-                        {cat}
-                      </Typography>
-                    ))}
-                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Type: {selectedSession.type === 'journey' ? 'Journey' : 'Condition'}
+                  </Typography>
+                  {selectedSession.type === 'journey' && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Category: {selectedSession.category?.name}
+                    </Typography>
+                  )}
+                  {selectedSession.type === 'condition' && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>Subcategories:</Typography>
+                      {selectedSession.subCategories?.map((subCat) => (
+                        <Chip 
+                          key={subCat.id}
+                          label={subCat.name}
+                          size="small"
+                          sx={{ mr: 0.5, mb: 0.5 }}
+                        />
+                      ))}
+                    </Box>
+                  )}
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     Status: {selectedSession.activated ? "Activated" : "Deactivated"}
                   </Typography>

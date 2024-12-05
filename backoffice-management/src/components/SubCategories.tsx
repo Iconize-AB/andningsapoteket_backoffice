@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { CloudUpload, Add, Edit, Save, Cancel } from '@mui/icons-material';
 
-interface Category {
+interface SubCategory {
   id: string;
   name: string;
   description: string | null;
@@ -39,46 +39,48 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-const Categories: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState('');
+const SubCategories: React.FC = () => {
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [newSubCategory, setNewSubCategory] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editImage, setEditImage] = useState<File | null>(null);
 
   useEffect(() => {
-    fetchCategories();
+    fetchSubCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchSubCategories = async () => {
     try {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/categories', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories', {
+        mode: 'cors',
+        credentials: 'omit',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch categories');
+      if (!response.ok) throw new Error('Failed to fetch subcategories');
 
       const data = await response.json();
-      setCategories(data.categories);
+      setSubCategories(data.subCategories);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
-  const handleAddCategory = async () => {
+  const handleAddSubCategory = async () => {
     try {
-      if (!newCategory.trim()) {
-        setError('Category name is required');
+      if (!newSubCategory.trim()) {
+        setError('SubCategory name is required');
         return;
       }
 
@@ -86,14 +88,16 @@ const Categories: React.FC = () => {
       if (!token) throw new Error('No authentication token found');
 
       const formData = new FormData();
-      formData.append('name', newCategory.trim());
+      formData.append('name', newSubCategory.trim());
       formData.append('description', newDescription.trim());
       if (selectedImage) {
         formData.append('image', selectedImage);
       }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/create', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/create', {
         method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -102,33 +106,32 @@ const Categories: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create category');
+        throw new Error(errorData.error || 'Failed to create subcategory');
       }
 
       const data = await response.json();
-      setCategories([...categories, data.category]);
-      setNewCategory('');
+      setSubCategories([...subCategories, data.subCategory]);
+      setNewSubCategory('');
       setNewDescription('');
       setSelectedImage(null);
-      setSuccess('Category created successfully');
+      setSuccess('SubCategory created successfully');
       setError(null);
 
-      // Reset success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
-  const handleEditClick = (category: Category) => {
-    setEditingCategory(category);
-    setEditName(category.name);
-    setEditDescription(category.description || '');
+  const handleEditClick = (subCategory: SubCategory) => {
+    setEditingSubCategory(subCategory);
+    setEditName(subCategory.name);
+    setEditDescription(subCategory.description || '');
     setEditImage(null);
   };
 
   const handleCancelEdit = () => {
-    setEditingCategory(null);
+    setEditingSubCategory(null);
     setEditName('');
     setEditDescription('');
     setEditImage(null);
@@ -136,7 +139,7 @@ const Categories: React.FC = () => {
 
   const handleSaveEdit = async () => {
     try {
-      if (!editingCategory) return;
+      if (!editingSubCategory) return;
       
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
@@ -148,8 +151,10 @@ const Categories: React.FC = () => {
         formData.append('image', editImage);
       }
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/update/${editingCategory.id}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/update/${editingSubCategory.id}`, {
         method: 'PUT',
+        mode: 'cors',
+        credentials: 'omit',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -158,18 +163,17 @@ const Categories: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update category');
+        throw new Error(errorData.error || 'Failed to update subcategory');
       }
 
       const data = await response.json();
-      setCategories(categories.map(cat => 
-        cat.id === editingCategory.id ? data.category : cat
+      setSubCategories(subCategories.map(subCat => 
+        subCat.id === editingSubCategory.id ? data.subCategory : subCat
       ));
       
-      setSuccess('Category updated successfully');
+      setSuccess('SubCategory updated successfully');
       handleCancelEdit();
       
-      // Reset success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -179,7 +183,7 @@ const Categories: React.FC = () => {
   return (
     <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'text.primary', mb: 4 }}>
-        Categories
+        SubCategories
       </Typography>
 
       <Card sx={{ mb: 4 }}>
@@ -188,9 +192,9 @@ const Categories: React.FC = () => {
             <Grid item xs={12} sm={4}>
               <StyledTextField
                 fullWidth
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                label="New Category Name"
+                value={newSubCategory}
+                onChange={(e) => setNewSubCategory(e.target.value)}
+                label="New SubCategory Name"
                 variant="outlined"
                 error={!!error && error.includes('name')}
               />
@@ -200,7 +204,7 @@ const Categories: React.FC = () => {
                 fullWidth
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                label="Category Description"
+                label="SubCategory Description"
                 variant="outlined"
                 multiline
                 rows={3}
@@ -235,11 +239,11 @@ const Categories: React.FC = () => {
             </Grid>
             <Grid item xs={12}>
               <StyledButton
-                onClick={handleAddCategory}
+                onClick={handleAddSubCategory}
                 variant="contained"
                 startIcon={<Add />}
               >
-                Add Category
+                Add SubCategory
               </StyledButton>
             </Grid>
           </Grid>
@@ -260,9 +264,9 @@ const Categories: React.FC = () => {
       <Card>
         <CardContent>
           <List>
-            {categories.map((category) => (
+            {subCategories.map((subCategory) => (
               <ListItem
-                key={category.id}
+                key={subCategory.id}
                 sx={{
                   borderBottom: '1px solid',
                   borderColor: 'divider',
@@ -270,8 +274,7 @@ const Categories: React.FC = () => {
                   padding: 2,
                 }}
               >
-                {editingCategory?.id === category.id ? (
-                  // Edit mode
+                {editingSubCategory?.id === subCategory.id ? (
                   <Box sx={{ width: '100%' }}>
                     <Grid container spacing={2} alignItems="flex-start">
                       <Grid item xs={12} sm={4}>
@@ -279,7 +282,7 @@ const Categories: React.FC = () => {
                           fullWidth
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          label="Category Name"
+                          label="SubCategory Name"
                           variant="outlined"
                         />
                       </Grid>
@@ -298,14 +301,14 @@ const Categories: React.FC = () => {
                         <input
                           accept="image/*"
                           style={{ display: 'none' }}
-                          id={`edit-image-${category.id}`}
+                          id={`edit-image-${subCategory.id}`}
                           type="file"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) setEditImage(file);
                           }}
                         />
-                        <label htmlFor={`edit-image-${category.id}`}>
+                        <label htmlFor={`edit-image-${subCategory.id}`}>
                           <StyledButton
                             variant="outlined"
                             component="span"
@@ -343,11 +346,11 @@ const Categories: React.FC = () => {
                   </Box>
                 ) : (
                   <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    {category.imageUrl && (
+                    {subCategory.imageUrl && (
                       <Box
                         component="img"
-                        src={category.imageUrl}
-                        alt={category.name}
+                        src={subCategory.imageUrl}
+                        alt={subCategory.name}
                         sx={{
                           width: 50,
                           height: 50,
@@ -359,8 +362,8 @@ const Categories: React.FC = () => {
                     )}
                     <Box sx={{ flexGrow: 1 }}>
                       <ListItemText
-                        primary={category.name}
-                        secondary={category.description}
+                        primary={subCategory.name}
+                        secondary={subCategory.description}
                         primaryTypographyProps={{
                           fontWeight: 500,
                         }}
@@ -368,7 +371,7 @@ const Categories: React.FC = () => {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <StyledButton
-                        onClick={() => handleEditClick(category)}
+                        onClick={() => handleEditClick(subCategory)}
                         variant="outlined"
                         startIcon={<Edit />}
                       >
@@ -386,4 +389,4 @@ const Categories: React.FC = () => {
   );
 };
 
-export default Categories;
+export default SubCategories; 

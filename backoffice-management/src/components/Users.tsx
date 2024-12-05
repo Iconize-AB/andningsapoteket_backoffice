@@ -198,7 +198,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/user/reminder-onboarding', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/user/reminder-onboarding', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -232,7 +232,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/create-user', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/create-user', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -273,7 +273,7 @@ const Users: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://ec2-51-20-254-95.eu-north-1.compute.amazonaws.com/v1/backoffice/users/all', {
+        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/users/all', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
