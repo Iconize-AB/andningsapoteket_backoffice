@@ -19,7 +19,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
         },
         body: JSON.stringify({
           email,
