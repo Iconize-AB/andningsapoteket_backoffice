@@ -108,6 +108,8 @@ interface Challenge {
     duration?: string;
     order: number;
     author?: string;
+    theoryTitle?: string;
+    theoryContent?: string;
   }[];
 }
 
@@ -352,19 +354,30 @@ const Challenges: React.FC = () => {
   const handleEditClick = (challenge: Challenge) => {
     setTitle(challenge.title);
     setDescription(challenge.description);
-    // Convert challenge sessions to SessionForm format
-    const sessionForms = challenge.sessions.map(session => ({
-      title: session.title,
-      description: session.description,
-      longDescription: session.longDescription ?? '',
-      duration: session.duration ?? '',
-      audio: null,
-      image: null,
-      author: session.author ?? '',
-      includeTheory: false,
-      theoryTitle: '',
-      theoryContent: '',
-    }));
+    
+    // Convert challenge sessions to SessionForm format with theory data
+    const sessionForms = challenge.sessions.map(session => {
+      console.log('Session theory data:', { 
+        theoryTitle: session.theoryTitle, 
+        theoryContent: session.theoryContent 
+      }); // Debug log
+      
+      return {
+        title: session.title,
+        description: session.description,
+        longDescription: session.longDescription ?? '',
+        duration: session.duration?.toString() ?? '',
+        audio: null,
+        image: null,
+        author: session.author ?? '',
+        // Explicitly check for theoryTitle and theoryContent
+        includeTheory: Boolean(session.theoryTitle) || Boolean(session.theoryContent),
+        theoryTitle: session.theoryTitle ?? '',
+        theoryContent: session.theoryContent ?? '',
+      };
+    });
+
+    console.log('Processed session forms:', sessionForms); // Debug log
     setSessions(sessionForms);
     setEditingChallenge(challenge);
     setIsEditing(true);
