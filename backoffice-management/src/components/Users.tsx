@@ -198,7 +198,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/user/reminder-onboarding', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/user/reminder-onboarding', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

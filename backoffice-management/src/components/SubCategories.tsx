@@ -13,7 +13,7 @@ import {
   CardContent,
   Grid
 } from '@mui/material';
-import { CloudUpload, Add, Edit, Save, Cancel } from '@mui/icons-material';
+import { CloudUpload, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
 
 interface SubCategory {
   id: string;
@@ -50,6 +50,7 @@ const SubCategories: React.FC = () => {
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editImage, setEditImage] = useState<File | null>(null);
+  const [deletingSubCategory, setDeletingSubCategory] = useState<SubCategory | null>(null);
 
   useEffect(() => {
     fetchSubCategories();
@@ -173,6 +174,41 @@ const SubCategories: React.FC = () => {
       
       setSuccess('SubCategory updated successfully');
       handleCancelEdit();
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    }
+  };
+
+  const handleDeleteClick = (subCategory: SubCategory) => {
+    setDeletingSubCategory(subCategory);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (!deletingSubCategory) return;
+      
+      const token = localStorage.getItem('userToken');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/${deletingSubCategory.id}`, {
+        method: 'DELETE',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete subcategory');
+      }
+
+      setSubCategories(subCategories.filter(subCat => subCat.id !== deletingSubCategory.id));
+      setSuccess('SubCategory deleted successfully');
+      setDeletingSubCategory(null);
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
@@ -377,6 +413,14 @@ const SubCategories: React.FC = () => {
                       >
                         Edit
                       </StyledButton>
+                      <StyledButton
+                        onClick={() => handleDeleteClick(subCategory)}
+                        variant="outlined"
+                        color="error"
+                        startIcon={<Delete />}
+                      >
+                        Delete
+                      </StyledButton>
                     </Box>
                   </Box>
                 )}
@@ -385,6 +429,35 @@ const SubCategories: React.FC = () => {
           </List>
         </CardContent>
       </Card>
+
+      {deletingSubCategory && (
+        <Alert
+          severity="warning"
+          sx={{ mt: 2, p: 2 }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <StyledButton
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </StyledButton>
+              <StyledButton
+                size="small"
+                variant="outlined"
+                onClick={() => setDeletingSubCategory(null)}
+              >
+                Cancel
+              </StyledButton>
+            </Box>
+          }
+        >
+          Are you sure you want to delete the subcategory "{deletingSubCategory.name}"? 
+          This action cannot be undone and will also delete all associated sessions that are not linked to other subcategories.
+        </Alert>
+      )}
     </Box>
   );
 };

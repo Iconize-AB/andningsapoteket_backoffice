@@ -13,7 +13,7 @@ import {
   CardContent,
   Grid
 } from '@mui/material';
-import { CloudUpload, Add, Edit, Save, Cancel } from '@mui/icons-material';
+import { CloudUpload, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
 
 interface Category {
   id: string;
@@ -50,6 +50,7 @@ const Categories: React.FC = () => {
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editImage, setEditImage] = useState<File | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -170,6 +171,39 @@ const Categories: React.FC = () => {
       handleCancelEdit();
       
       // Reset success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    }
+  };
+
+  const handleDeleteClick = (category: Category) => {
+    setDeletingCategory(category);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (!deletingCategory) return;
+      
+      const token = localStorage.getItem('userToken');
+      if (!token) throw new Error('No authentication token found');
+
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/${deletingCategory.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete category');
+      }
+
+      setCategories(categories.filter(cat => cat.id !== deletingCategory.id));
+      setSuccess('Category deleted successfully');
+      setDeletingCategory(null);
+      
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -374,6 +408,14 @@ const Categories: React.FC = () => {
                       >
                         Edit
                       </StyledButton>
+                      <StyledButton
+                        onClick={() => handleDeleteClick(category)}
+                        variant="outlined"
+                        color="error"
+                        startIcon={<Delete />}
+                      >
+                        Delete
+                      </StyledButton>
                     </Box>
                   </Box>
                 )}
@@ -382,6 +424,34 @@ const Categories: React.FC = () => {
           </List>
         </CardContent>
       </Card>
+
+      {deletingCategory && (
+        <Alert
+          severity="warning"
+          sx={{ mt: 2, p: 2 }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <StyledButton
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </StyledButton>
+              <StyledButton
+                size="small"
+                variant="outlined"
+                onClick={() => setDeletingCategory(null)}
+              >
+                Cancel
+              </StyledButton>
+            </Box>
+          }
+        >
+          Are you sure you want to delete the category "{deletingCategory.name}"? This action cannot be undone.
+        </Alert>
+      )}
     </Box>
   );
 };
