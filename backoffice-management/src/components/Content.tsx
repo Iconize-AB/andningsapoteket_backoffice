@@ -38,10 +38,7 @@ interface Session {
     imageUrl: string | null;
   } | null;
   categories: string[];
-  subCategories: {
-    id: string;
-    name: string;
-  }[];
+  subCategories: SessionSubCategory[];
   activated: boolean;
   highlighted: boolean;
   type: 'journey' | 'condition';
@@ -84,6 +81,17 @@ interface Category {
 interface SubCategory {
   id: string;
   name: string;
+}
+
+interface SessionSubCategory {
+  id: number;
+  sessionId: string;
+  subCategoryId: string;
+  createdAt: string;
+  subCategory: {
+    id: string;
+    name: string;
+  };
 }
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -430,14 +438,16 @@ const Content: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
+      const subCategoryIds = selectedSession.type === 'condition' 
+        ? selectedSession.subCategories.map(sc => sc.subCategory.id)
+        : [];
+
       const requestBody = {
         title: selectedSession.title,
         description: selectedSession.description,
         type: selectedSession.type,
         categoryId: selectedSession.type === 'journey' ? selectedSession.category?.id : null,
-        subCategoryId: selectedSession.type === 'condition' 
-          ? selectedSession.subCategories.map(sc => sc.id) 
-          : [],
+        subCategoryIds: selectedSession.type === 'condition' ? JSON.stringify(subCategoryIds) : null,
         activated: selectedSession.activated,
         highlighted: selectedSession.highlighted
       };
@@ -1126,27 +1136,30 @@ const Content: React.FC = () => {
                       <InputLabel>Subcategories</InputLabel>
                       <StyledSelect
                         multiple
-                        value={selectedSession.subCategories?.map(sc => sc.id) || []}
+                        value={selectedSession.subCategories?.map(sc => sc.subCategory.id) || []}
                         onChange={(e) => {
                           const selectedIds = e.target.value as string[];
-                          const selectedSubCategories = selectedIds.map(id => {
-                            const subCat = subCategories.find(sc => sc.id === id);
-                            return {
+                          const selectedSubCategories: SessionSubCategory[] = selectedIds.map(id => ({
+                            id: 0,
+                            sessionId: selectedSession.id,
+                            subCategoryId: id,
+                            createdAt: new Date().toISOString(),
+                            subCategory: {
                               id: id,
-                              name: subCat?.name || ''
-                            } as SubCategory;
-                          });
+                              name: subCategories.find(sc => sc.id === id)?.name || ''
+                            }
+                          }));
                           setSelectedSession({
                             ...selectedSession,
                             subCategories: selectedSubCategories
-                          } as Session);
+                          });
                         }}
                         renderValue={(selected) => (
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {(selectedSession.subCategories || []).map((subCat: SubCategory) => (
+                            {(selectedSession.subCategories || []).map((subCat) => (
                               <Chip 
-                                key={subCat.id} 
-                                label={subCat.name} 
+                                key={subCat.subCategory.id} 
+                                label={subCat.subCategory.name} 
                                 size="small"
                               />
                             ))}
@@ -1202,8 +1215,8 @@ const Content: React.FC = () => {
                       <Typography variant="body2" sx={{ mb: 0.5 }}>Subcategories:</Typography>
                       {selectedSession.subCategories?.map((subCat) => (
                         <Chip 
-                          key={subCat.id}
-                          label={subCat.name}
+                          key={subCat.subCategory.id}
+                          label={subCat.subCategory.name}
                           size="small"
                           sx={{ mr: 0.5, mb: 0.5 }}
                         />
