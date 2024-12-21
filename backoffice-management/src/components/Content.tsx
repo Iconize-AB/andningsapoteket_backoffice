@@ -54,7 +54,11 @@ interface NewSession {
   duration: string;
   activated: boolean;
   startQuestion: string;
+  startQuestionLeftLabel: string;
+  startQuestionRightLabel: string;
   endQuestion: string;
+  endQuestionLeftLabel: string;
+  endQuestionRightLabel: string;
   author: string;
   type: 'journey' | 'condition';
 }
@@ -206,7 +210,11 @@ const Content: React.FC = () => {
     duration: '',
     activated: true,
     startQuestion: '',
+    startQuestionLeftLabel: '',
+    startQuestionRightLabel: '',
     endQuestion: '',
+    endQuestionLeftLabel: '',
+    endQuestionRightLabel: '',
     author: '',
     type: 'journey',
   });
@@ -400,7 +408,11 @@ const Content: React.FC = () => {
         duration: '', 
         activated: true, 
         startQuestion: '', 
+        startQuestionLeftLabel: '',
+        startQuestionRightLabel: '',
         endQuestion: '', 
+        endQuestionLeftLabel: '',
+        endQuestionRightLabel: '',
         author: '',
         type: 'journey',
       });
@@ -931,6 +943,7 @@ const Content: React.FC = () => {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
+                {newSession.type === 'condition' && (
                   <StyledTextField
                     fullWidth
                     label="Start Question"
@@ -941,8 +954,38 @@ const Content: React.FC = () => {
                     rows={2}
                     helperText="Question to ask before the session starts (optional)"
                   />
+                )}
                 </Grid>
                 <Grid item xs={12}>
+                  {newSession.type === 'condition' && (
+                  <StyledTextField
+                    fullWidth
+                    label="Start Question Left Label"
+                    name="startQuestionLeftLabel"
+                    value={newSession.startQuestionLeftLabel}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Label for the left button in the start question (optional)"
+                  />
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  {newSession.type === 'condition' && (
+                  <StyledTextField
+                    fullWidth
+                    label="Start Question Right Label"
+                    name="startQuestionRightLabel"
+                    value={newSession.startQuestionRightLabel}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Label for the right button in the start question (optional)"
+                  />
+                )}
+                </Grid>
+                <Grid item xs={12}>
+                  {newSession.type === 'condition' && (
                   <StyledTextField
                     fullWidth
                     label="End Question"
@@ -953,6 +996,35 @@ const Content: React.FC = () => {
                     rows={2}
                     helperText="Question to ask after the session ends (optional)"
                   />
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  {newSession.type === 'condition' && (
+                  <StyledTextField
+                    fullWidth
+                    label="End Question Left Label"
+                    name="endQuestionLeftLabel"
+                    value={newSession.endQuestionLeftLabel}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Label for the left button in the end question (optional)"
+                  />
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  {newSession.type === 'condition' && (
+                  <StyledTextField
+                    fullWidth
+                    label="End Question Right Label"
+                    name="endQuestionRightLabel"
+                    value={newSession.endQuestionRightLabel}
+                    onChange={handleInputChange}
+                    multiline
+                    rows={2}
+                    helperText="Label for the right button in the end question (optional)"
+                  />
+                  )}
                 </Grid>
                 <Grid item xs={12}>
                   <StyledTextField
