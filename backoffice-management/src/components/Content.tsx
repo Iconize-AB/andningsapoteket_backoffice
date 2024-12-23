@@ -836,28 +836,6 @@ const Content: React.FC = () => {
                   </Grid>
                 )}
 
-                {newSession.type === 'condition' && (
-                  <Grid item xs={12}>
-                    <FormControl fullWidth>
-                      <InputLabel>Subcategory</InputLabel>
-                      <StyledSelect
-                        value={newSession.subCategoryId}
-                        onChange={(e) => {
-                          const value = e.target.value as string;
-                          setNewSession(prev => ({ ...prev, subCategoryId: value }));
-                        }}
-                        required
-                      >
-                        {subCategories.map((subCategory) => (
-                          <MenuItem key={subCategory.id} value={subCategory.id}>
-                            {subCategory.name}
-                          </MenuItem>
-                        ))}
-                      </StyledSelect>
-                    </FormControl>
-                  </Grid>
-                )}
-
                 <Grid item xs={12}>
                   <StyledTextField
                     fullWidth
@@ -942,90 +920,74 @@ const Content: React.FC = () => {
                     </StyledSelect>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
                 {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="Start Question"
-                    name="startQuestion"
-                    value={newSession.startQuestion}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Question to ask before the session starts (optional)"
-                  />
+                  <>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="Start Question"
+                        name="startQuestion"
+                        value={newSession.startQuestion}
+                        onChange={handleInputChange}
+                        multiline
+                        rows={2}
+                        helperText="Question to ask before the session starts (optional)"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="Start Question Left Label"
+                        name="startQuestionLeftLabel"
+                        value={newSession.startQuestionLeftLabel}
+                        onChange={handleInputChange}
+                        helperText="Label for the left button in the start question (optional)"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="Start Question Right Label"
+                        name="startQuestionRightLabel"
+                        value={newSession.startQuestionRightLabel}
+                        onChange={handleInputChange}
+                        helperText="Label for the right button in the start question (optional)"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="End Question"
+                        name="endQuestion"
+                        value={newSession.endQuestion}
+                        onChange={handleInputChange}
+                        multiline
+                        rows={2}
+                        helperText="Question to ask after the session ends (optional)"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="End Question Left Label"
+                        name="endQuestionLeftLabel"
+                        value={newSession.endQuestionLeftLabel}
+                        onChange={handleInputChange}
+                        helperText="Label for the left button in the end question (optional)"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="End Question Right Label"
+                        name="endQuestionRightLabel"
+                        value={newSession.endQuestionRightLabel}
+                        onChange={handleInputChange}
+                        helperText="Label for the right button in the end question (optional)"
+                      />
+                    </Grid>
+                  </>
                 )}
-                </Grid>
-                <Grid item xs={12}>
-                  {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="Start Question Left Label"
-                    name="startQuestionLeftLabel"
-                    value={newSession.startQuestionLeftLabel}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Label for the left button in the start question (optional)"
-                  />
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="Start Question Right Label"
-                    name="startQuestionRightLabel"
-                    value={newSession.startQuestionRightLabel}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Label for the right button in the start question (optional)"
-                  />
-                )}
-                </Grid>
-                <Grid item xs={12}>
-                  {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="End Question"
-                    name="endQuestion"
-                    value={newSession.endQuestion}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Question to ask after the session ends (optional)"
-                  />
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="End Question Left Label"
-                    name="endQuestionLeftLabel"
-                    value={newSession.endQuestionLeftLabel}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Label for the left button in the end question (optional)"
-                  />
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  {newSession.type === 'condition' && (
-                  <StyledTextField
-                    fullWidth
-                    label="End Question Right Label"
-                    name="endQuestionRightLabel"
-                    value={newSession.endQuestionRightLabel}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={2}
-                    helperText="Label for the right button in the end question (optional)"
-                  />
-                  )}
-                </Grid>
                 <Grid item xs={12}>
                   <StyledTextField
                     fullWidth
