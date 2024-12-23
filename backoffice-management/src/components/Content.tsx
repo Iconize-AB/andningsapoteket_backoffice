@@ -835,6 +835,27 @@ const Content: React.FC = () => {
                     </FormControl>
                   </Grid>
                 )}
+                {newSession.type === 'condition' && (
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Subcategory</InputLabel>
+                      <StyledSelect
+                        value={newSession.subCategoryId}
+                        onChange={(e) => {
+                          const value = e.target.value as string;
+                          setNewSession(prev => ({ ...prev, subCategoryId: value }));
+                        }}
+                        required
+                      >
+                        {subCategories.map((subCategory) => (
+                          <MenuItem key={subCategory.id} value={subCategory.id}>
+                            {subCategory.name}
+                          </MenuItem>
+                        ))}
+                      </StyledSelect>
+                    </FormControl>
+                  </Grid>
+                )}
 
                 <Grid item xs={12}>
                   <StyledTextField
