@@ -196,24 +196,37 @@ const Organizations: React.FC = () => {
 
   const handleUpdateOrganization = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!selectedOrg) return;
+  
     setUpdating(true);
     try {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
-
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg?.id}`, {
+  
+      // Update organization details
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(selectedOrg),
+        body: JSON.stringify({
+          name: selectedOrg.name,
+          description: selectedOrg.description,
+          vatNumber: selectedOrg.vatNumber,
+          address: selectedOrg.address,
+          userIds: selectedUsers.map(user => user.id), // Add this line to include selected user IDs
+        }),
       });
-
+  
       if (!response.ok) throw new Error('Failed to update organization');
-
+  
       const data = await response.json();
-      setOrganizations(prev => prev.map(org => org.id === selectedOrg?.id ? data.organization : org));
+      
+      // Update local state with the response data
+      setOrganizations(prev => prev.map(org => 
+        org.id === selectedOrg.id ? { ...data.organization, users: selectedUsers } : org
+      ));
       setEditMode(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
