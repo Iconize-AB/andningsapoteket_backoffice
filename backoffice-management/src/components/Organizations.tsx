@@ -172,7 +172,7 @@ const Organizations: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/organizations/create', {
+      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,7 +201,7 @@ const Organizations: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/organizations/${selectedOrg?.id}`, {
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg?.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -229,7 +229,7 @@ const Organizations: React.FC = () => {
         const token = localStorage.getItem('userToken');
         if (!token) throw new Error('No authentication token found');
 
-        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/organizations', {
+        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/organizations/organizations', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 
