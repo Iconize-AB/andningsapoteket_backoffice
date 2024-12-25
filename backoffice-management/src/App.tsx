@@ -12,6 +12,7 @@ import Login from './components/Login';
 import Challenges from './components/Challenges';
 import SixDayChallenges from './components/SixDayChallenges';
 import SubCategories from './components/SubCategories';
+import Organizations from './components/Organizations';
 
 const theme = createTheme({
   palette: {
@@ -56,6 +57,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/users" element={<Users />} />
+                <Route path="/organizations" element={<Organizations />} />
                 <Route path="/journeys" element={<Content />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/subcategories" element={<SubCategories />} />

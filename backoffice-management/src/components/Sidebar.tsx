@@ -18,6 +18,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TimerIcon from '@mui/icons-material/Timer';
 import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
+import BusinessIcon from '@mui/icons-material/Business';
 
 const drawerWidth = 240;
 
@@ -30,6 +31,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+  { text: 'Organizations', icon: <BusinessIcon />, path: '/organizations' },
   { text: 'Journeys', icon: <ContentPasteIcon />, path: '/journeys' },
   { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
   { text: 'SubCategories', icon: <SubdirectoryArrowRightIcon />, path: '/subcategories' },
