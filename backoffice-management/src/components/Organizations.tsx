@@ -9,6 +9,7 @@ import {
   Typography,
   Alert,
   Button,
+  ButtonProps,
   Tabs,
   Tab,
   Box,
@@ -22,10 +23,12 @@ import {
   DialogActions,
   Autocomplete,
   Chip,
+  Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface User {
   id: string;
@@ -119,6 +122,29 @@ const StyledForm = styled('form')(({ theme }) => ({
   },
 }));
 
+const VisuallyHiddenInput = styled('input')`
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  white-space: nowrap;
+  width: 1px;
+`;
+
+const StyledUploadButton = styled(Button)<ButtonProps>(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(1),
+  width: '100%',
+  padding: theme.spacing(1.5),
+  border: `1px dashed ${theme.palette.divider}`,
+  '&:hover': {
+    border: `1px dashed ${theme.palette.primary.main}`,
+  },
+}));
+
 const Organizations: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +162,9 @@ const Organizations: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [updating, setUpdating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (editMode) {
@@ -232,6 +261,84 @@ const Organizations: React.FC = () => {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const processFileContent = async (content: string, fileType: 'csv' | 'txt' | 'xlsx') => {
+    let users: Array<{ firstName: string; lastName: string; email: string; }> = [];
+
+    if (fileType === 'csv' || fileType === 'txt') {
+      const rows = content.split('\n');
+      // Skip header row if it exists
+      const dataRows = rows[0].includes('firstName') ? rows.slice(1) : rows;
+      
+      users = dataRows
+        .filter(row => row.trim()) // Skip empty rows
+        .map(row => {
+          const [firstName, lastName, email] = row.split(',').map(field => field.trim());
+          return { firstName, lastName, email };
+        });
+    }
+    // Add XLSX processing if needed
+
+    return users;
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedOrg) return;
+
+    const fileType = file.name.split('.').pop()?.toLowerCase() as 'csv' | 'txt' | 'xlsx';
+    if (!['csv', 'txt', 'xlsx'].includes(fileType)) {
+      setUploadError('Invalid file type. Please upload a CSV, TXT, or XLSX file.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      const content = await file.text();
+      const users = await processFileContent(content, fileType);
+      const token = localStorage.getItem('userToken');
+      if (!token) throw new Error('No authentication token found');
+
+      // Single request with all users
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg.id}/users/bulk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          users: users,
+          organizationId: selectedOrg.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload users');
+      }
+
+      // Update progress to 100% on success
+      setUploadProgress(100);
+
+      // Refresh available users after bulk upload
+      const usersResponse = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/users', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (usersResponse.ok) {
+        const data = await usersResponse.json();
+        setAvailableUsers(data.users);
+      }
+
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setUploading(false);
+      event.target.value = ''; // Reset file input
     }
   };
 
@@ -453,6 +560,32 @@ const Organizations: React.FC = () => {
                 ))
               }
             />
+            <Box sx={{ mt: 3, mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Bulk Upload Users
+              </Typography>
+              <StyledUploadButton
+                component="label"
+                variant="outlined"
+                startIcon={uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                disabled={uploading}
+              >
+                {uploading ? `Uploading... ${Math.round(uploadProgress)}%` : 'Upload User List'}
+                <VisuallyHiddenInput
+                  type="file"
+                  accept=".csv,.txt,.xlsx"
+                  onChange={handleFileUpload}
+                />
+              </StyledUploadButton>
+              {uploadError && (
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  {uploadError}
+                </Alert>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+            
             <DialogActions>
               <Button onClick={() => setEditMode(false)}>
                 Cancel
