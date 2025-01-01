@@ -26,8 +26,9 @@ import {
   DialogTitle,
   styled,
   Chip,
+  Tooltip,
 } from '@mui/material';
-import { Edit, Delete, CloudUpload, Star, Save } from '@mui/icons-material';
+import { Edit, Delete, CloudUpload, Star, Save, Search, FilterList } from '@mui/icons-material';
 interface Session {
   id: string;
   title: string;
@@ -182,6 +183,12 @@ const TypeTag = styled(Typography)(({ theme }) => ({
   fontWeight: 500,
 }));
 
+const SearchContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(3),
+}));
+
 const getAudioDuration = async (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const audio = new Audio();
@@ -229,6 +236,12 @@ const Content: React.FC = () => {
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [sessionToHighlight, setSessionToHighlight] = useState<string | null>(null);
+  const [openHighlightDialog, setOpenHighlightDialog] = useState(false);
+  const [highlightAction, setHighlightAction] = useState<'highlight' | 'unhighlight'>('highlight');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'journey' | 'condition'>('all');
+  const [filterActivated, setFilterActivated] = useState<'all' | 'active' | 'inactive'>('all');
 
   useEffect(() => {
     fetchSessions();
@@ -661,6 +674,49 @@ const Content: React.FC = () => {
     }
   };
 
+  const handleHighlightToggleClick = (sessionId: string, currentHighlightState: boolean) => {
+    setSessionToHighlight(sessionId);
+    setHighlightAction(currentHighlightState ? 'unhighlight' : 'highlight');
+    setOpenHighlightDialog(true);
+  };
+
+  const handleConfirmHighlight = async () => {
+    if (!sessionToHighlight) return;
+    
+    try {
+      await handleHighlightToggle(sessionToHighlight);
+    } finally {
+      setOpenHighlightDialog(false);
+      setSessionToHighlight(null);
+    }
+  };
+
+  const getFilteredSessions = (sessions: GroupedSessions): GroupedSessions => {
+    const filteredSessions: GroupedSessions = {};
+
+    Object.entries(sessions).forEach(([category, sessionList]) => {
+      const filtered = sessionList.filter(session => {
+        const matchesSearch = searchQuery.toLowerCase() === '' || 
+          session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          session.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesType = filterType === 'all' || session.type === filterType;
+
+        const matchesActivation = filterActivated === 'all' ||
+          (filterActivated === 'active' && session.activated) ||
+          (filterActivated === 'inactive' && !session.activated);
+
+        return matchesSearch && matchesType && matchesActivation;
+      });
+
+      if (filtered.length > 0) {
+        filteredSessions[category] = filtered;
+      }
+    });
+
+    return filteredSessions;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -686,135 +742,178 @@ const Content: React.FC = () => {
       <StyledCard>
         <CardContent>
           {activeTab === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>
-                  Highlighted Sessions
-                </Typography>
-                <List>
-                  {highlightedSessions.map((session) => (
-                    <ListItem
-                      key={session.id}
-                      sx={{
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                        '&:last-child': { borderBottom: 'none' },
-                        padding: 2,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <ListItemText
-                            primary={session.title}
-                            secondary={
-                              <Box>
-                                <Typography variant="body2" color="text.secondary">
-                                  {session.description}
-                                </Typography>
-                                <Box sx={{ mt: 1 }}>
-                                  <Chip 
-                                    label={session.type} 
-                                    size="small" 
-                                    sx={{ mr: 1 }} 
-                                  />
-                                  {session.category && (
-                                    <Chip 
-                                      label={session.category.name} 
-                                      size="small" 
-                                      variant="outlined" 
-                                    />
-                                  )}
-                                </Box>
-                              </Box>
-                            }
-                            primaryTypographyProps={{ fontWeight: 500 }}
-                          />
-                        </Box>
-                        <Star sx={{ color: 'primary.main', ml: 2 }} />
-                      </Box>
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
+            <>
+              <SearchContainer>
+                <StyledTextField
+                  placeholder="Search sessions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
+                  }}
+                  sx={{ flexGrow: 1 }}
+                />
+                <FormControl sx={{ minWidth: 120 }}>
+                  <StyledSelect
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value as typeof filterType)}
+                    displayEmpty
+                    startAdornment={<FilterList sx={{ color: 'text.secondary', mr: 1 }} />}
+                  >
+                    <MenuItem value="all">All Types</MenuItem>
+                    <MenuItem value="journey">Journeys</MenuItem>
+                    <MenuItem value="condition">Conditions</MenuItem>
+                  </StyledSelect>
+                </FormControl>
+                <FormControl sx={{ minWidth: 120 }}>
+                  <StyledSelect
+                    value={filterActivated}
+                    onChange={(e) => setFilterActivated(e.target.value as typeof filterActivated)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Status</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                  </StyledSelect>
+                </FormControl>
+              </SearchContainer>
 
-              <Grid item xs={12}>
-                {Object.entries(sessions).map(([categoryName, categorySessions]) => (
-                  <Box key={categoryName} sx={{ mb: 4 }}>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>
-                      {categoryName}
-                    </Typography>
-                    <List>
-                      {categorySessions.map((session) => (
-                        <ListItem
-                          key={session.id}
-                          sx={{
-                            borderBottom: '1px solid',
-                            borderColor: 'divider',
-                            '&:last-child': { borderBottom: 'none' },
-                            padding: 2,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                            <Box sx={{ flexGrow: 1 }}>
-                              <ListItemText
-                                primary={session.title}
-                                secondary={
-                                  <Box>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {session.description}
-                                    </Typography>
-                                    <Box sx={{ mt: 1 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    Highlighted Sessions
+                  </Typography>
+                  <List>
+                    {highlightedSessions.map((session) => (
+                      <ListItem
+                        key={session.id}
+                        sx={{
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          '&:last-child': { borderBottom: 'none' },
+                          padding: 2,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <ListItemText
+                              primary={session.title}
+                              secondary={
+                                <Box>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {session.description}
+                                  </Typography>
+                                  <Box sx={{ mt: 1 }}>
+                                    <Chip 
+                                      label={session.type} 
+                                      size="small" 
+                                      sx={{ mr: 1 }} 
+                                    />
+                                    {session.category && (
                                       <Chip 
-                                        label={session.type} 
+                                        label={session.category.name} 
                                         size="small" 
-                                        sx={{ mr: 1 }} 
+                                        variant="outlined" 
                                       />
-                                      {session.type === 'condition' && session.subCategories.map((subCat) => (
-                                        <Chip
-                                          key={subCat.subCategory.id}
-                                          label={subCat.subCategory.name}
-                                          size="small"
-                                          variant="outlined"
-                                          sx={{ mr: 0.5 }}
-                                        />
-                                      ))}
-                                    </Box>
+                                    )}
                                   </Box>
-                                }
-                                primaryTypographyProps={{ fontWeight: 500 }}
-                              />
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                              <Switch
-                                checked={session.highlighted}
-                                onChange={() => handleHighlightToggle(session.id)}
-                                color="primary"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <StyledButton
-                                onClick={() => handleSessionClick(session)}
-                                variant="outlined"
-                                startIcon={<Edit />}
-                              >
-                                Edit
-                              </StyledButton>
-                              <StyledButton
-                                onClick={handleDeleteClick}
-                                variant="outlined"
-                                color="error"
-                                startIcon={<Delete />}
-                              >
-                                Delete
-                              </StyledButton>
-                            </Box>
+                                </Box>
+                              }
+                              primaryTypographyProps={{ fontWeight: 500 }}
+                            />
                           </Box>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                ))}
+                          <Star sx={{ color: 'primary.main', ml: 2 }} />
+                        </Box>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Grid>
+
+                <Grid item xs={12}>
+                  {Object.entries(getFilteredSessions(sessions)).map(([categoryName, categorySessions]) => (
+                    <Box key={categoryName} sx={{ mb: 4 }}>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>
+                        {categoryName}
+                      </Typography>
+                      <List>
+                        {categorySessions.map((session) => (
+                          <ListItem
+                            key={session.id}
+                            sx={{
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              '&:last-child': { borderBottom: 'none' },
+                              padding: 2,
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                              <Box sx={{ flexGrow: 1 }}>
+                                <ListItemText
+                                  primary={session.title}
+                                  secondary={
+                                    <Box>
+                                      <Typography variant="body2" color="text.secondary">
+                                        {session.description}
+                                      </Typography>
+                                      <Box sx={{ mt: 1 }}>
+                                        <Chip 
+                                          label={session.type} 
+                                          size="small" 
+                                          sx={{ mr: 1 }} 
+                                        />
+                                        {session.type === 'condition' && session.subCategories.map((subCat) => (
+                                          <Chip
+                                            key={subCat.subCategory.id}
+                                            label={subCat.subCategory.name}
+                                            size="small"
+                                            variant="outlined"
+                                            sx={{ mr: 0.5 }}
+                                          />
+                                        ))}
+                                      </Box>
+                                    </Box>
+                                  }
+                                  primaryTypographyProps={{ fontWeight: 500 }}
+                                />
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                <Tooltip title={session.highlighted ? "Remove from highlights" : "Add to highlights"}>
+                                  <Switch
+                                    checked={session.highlighted}
+                                    onChange={() => handleHighlightToggleClick(session.id, session.highlighted)}
+                                    color="primary"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </Tooltip>
+                                <Tooltip title="Edit session">
+                                  <StyledButton
+                                    onClick={() => handleSessionClick(session)}
+                                    variant="outlined"
+                                    startIcon={<Edit />}
+                                  >
+                                    Edit
+                                  </StyledButton>
+                                </Tooltip>
+                                <Tooltip title="Delete session">
+                                  <StyledButton
+                                    onClick={handleDeleteClick}
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<Delete />}
+                                  >
+                                    Delete
+                                  </StyledButton>
+                                </Tooltip>
+                              </Box>
+                            </Box>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  ))}
+                </Grid>
               </Grid>
-            </Grid>
+            </>
           )}
 
           {activeTab === 1 && (
@@ -1334,6 +1433,23 @@ const Content: React.FC = () => {
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      <Dialog open={openHighlightDialog} onClose={() => setOpenHighlightDialog(false)}>
+        <DialogTitle>Confirm {highlightAction === 'highlight' ? 'Highlight' : 'Unhighlight'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {highlightAction} this session?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <StyledButton onClick={() => setOpenHighlightDialog(false)} variant="outlined">
+            Cancel
+          </StyledButton>
+          <StyledButton onClick={handleConfirmHighlight} variant="contained">
+            Confirm
+          </StyledButton>
+        </DialogActions>
       </Dialog>
     </Box>
   );
