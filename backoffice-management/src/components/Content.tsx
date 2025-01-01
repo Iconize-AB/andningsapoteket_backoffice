@@ -373,11 +373,7 @@ const Content: React.FC = () => {
         if (value !== null) {
           if (key === 'audio' || key === 'image') {
             if (value instanceof File) {
-              if (key === 'image' && newSession.type === 'journey') {
-                formData.append(key, value);
-              } else if (key === 'audio') {
-                formData.append(key, value);
-              }
+              formData.append(key, value);
             }
           } else {
             formData.append(key, value.toString());
@@ -696,104 +692,127 @@ const Content: React.FC = () => {
                   Highlighted Sessions
                 </Typography>
                 <List>
-                  {highlightedSessions.map((session: Session) => (
-                    <ListItem key={session.id} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-                      <ListItemText 
-                        primary={session.title} 
-                        secondary={`Category: ${session?.category?.name}`}
-                        primaryTypographyProps={{ fontWeight: 500 }}
-                      />
-                      <ListItemSecondaryAction>
-                        <Star sx={{ color: 'primary.main' }} />
-                      </ListItemSecondaryAction>
+                  {highlightedSessions.map((session) => (
+                    <ListItem
+                      key={session.id}
+                      sx={{
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        '&:last-child': { borderBottom: 'none' },
+                        padding: 2,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <ListItemText
+                            primary={session.title}
+                            secondary={
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  {session.description}
+                                </Typography>
+                                <Box sx={{ mt: 1 }}>
+                                  <Chip 
+                                    label={session.type} 
+                                    size="small" 
+                                    sx={{ mr: 1 }} 
+                                  />
+                                  {session.category && (
+                                    <Chip 
+                                      label={session.category.name} 
+                                      size="small" 
+                                      variant="outlined" 
+                                    />
+                                  )}
+                                </Box>
+                              </Box>
+                            }
+                            primaryTypographyProps={{ fontWeight: 500 }}
+                          />
+                        </Box>
+                        <Star sx={{ color: 'primary.main', ml: 2 }} />
+                      </Box>
                     </ListItem>
                   ))}
                 </List>
               </Grid>
+
               <Grid item xs={12}>
-                <Grid container spacing={2}>
-                  {Object.entries(sessions).map(([categoryName, categorySessions]) => (
-                    <Grid item xs={12} key={categoryName}>
-                      <CategoryTag>
-                        {categoryName}
-                      </CategoryTag>
-                      <Grid container spacing={2}>
-                        {categorySessions.map((session) => (
-                          <Grid item xs={12} sm={6} md={4} key={session.id}>
-                            <StyledCard 
-                              onClick={() => handleSessionClick(session)}
-                              sx={{ 
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column'
-                              }}
-                            >
-                              <CardContent sx={{ 
-                                flexGrow: 1,
-                                display: 'flex',
-                                flexDirection: 'column',
-                              }}>
-                                <TypeTag>
-                                  {session.type}
-                                </TypeTag>
-                                <Typography 
-                                  variant="h6" 
-                                  sx={{ 
-                                    mb: 1,
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {session.title}
-                                </Typography>
-                                <Typography 
-                                  variant="body2" 
-                                  color="text.secondary"
-                                  sx={{
-                                    mb: 2,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                  }}
-                                >
-                                  {session.description}
-                                </Typography>
-                                <Box sx={{ 
-                                  mb: 'auto',
-                                  display: 'flex',
-                                  flexWrap: 'wrap',
-                                }}>
-                                  {session?.categories?.map((category: string) => (
-                                    <CategoryTag key={category}>
-                                      {category}
-                                    </CategoryTag>
-                                  ))}
-                                </Box>
-                                <Box sx={{ 
-                                  mt: 2,
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'space-between',
-                                }}>
-                                  <Switch
-                                    checked={session.highlighted}
-                                    onChange={() => handleHighlightToggle(session.id)}
-                                    color="primary"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <Typography variant="body2">
-                                    {session.highlighted ? "Highlighted" : "Not Highlighted"}
-                                  </Typography>
-                                </Box>
-                              </CardContent>
-                            </StyledCard>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
-                  ))}
-                </Grid>
+                {Object.entries(sessions).map(([categoryName, categorySessions]) => (
+                  <Box key={categoryName} sx={{ mb: 4 }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>
+                      {categoryName}
+                    </Typography>
+                    <List>
+                      {categorySessions.map((session) => (
+                        <ListItem
+                          key={session.id}
+                          sx={{
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            '&:last-child': { borderBottom: 'none' },
+                            padding: 2,
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                            <Box sx={{ flexGrow: 1 }}>
+                              <ListItemText
+                                primary={session.title}
+                                secondary={
+                                  <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {session.description}
+                                    </Typography>
+                                    <Box sx={{ mt: 1 }}>
+                                      <Chip 
+                                        label={session.type} 
+                                        size="small" 
+                                        sx={{ mr: 1 }} 
+                                      />
+                                      {session.type === 'condition' && session.subCategories.map((subCat) => (
+                                        <Chip
+                                          key={subCat.subCategory.id}
+                                          label={subCat.subCategory.name}
+                                          size="small"
+                                          variant="outlined"
+                                          sx={{ mr: 0.5 }}
+                                        />
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                }
+                                primaryTypographyProps={{ fontWeight: 500 }}
+                              />
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                              <Switch
+                                checked={session.highlighted}
+                                onChange={() => handleHighlightToggle(session.id)}
+                                color="primary"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <StyledButton
+                                onClick={() => handleSessionClick(session)}
+                                variant="outlined"
+                                startIcon={<Edit />}
+                              >
+                                Edit
+                              </StyledButton>
+                              <StyledButton
+                                onClick={handleDeleteClick}
+                                variant="outlined"
+                                color="error"
+                                startIcon={<Delete />}
+                              >
+                                Delete
+                              </StyledButton>
+                            </Box>
+                          </Box>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                ))}
               </Grid>
             </Grid>
           )}
@@ -904,7 +923,6 @@ const Content: React.FC = () => {
                     </Typography>
                   )}
                 </Grid>
-                {newSession.type === 'journey' && (
                   <Grid item xs={12}>
                     <input
                       accept="image/*"
@@ -927,7 +945,6 @@ const Content: React.FC = () => {
                       </Typography>
                     )}
                   </Grid>
-                )}
                 <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel>Activate session</InputLabel>
