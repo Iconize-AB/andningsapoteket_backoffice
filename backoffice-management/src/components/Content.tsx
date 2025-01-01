@@ -896,7 +896,10 @@ const Content: React.FC = () => {
                                 </Tooltip>
                                 <Tooltip title="Delete session">
                                   <StyledButton
-                                    onClick={handleDeleteClick}
+                                    onClick={() => {
+                                      setSelectedSession(session);
+                                      setOpenDeleteDialog(true);
+                                    }}
                                     variant="outlined"
                                     color="error"
                                     startIcon={<Delete />}
