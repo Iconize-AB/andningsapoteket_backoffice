@@ -250,6 +250,8 @@ const StyledButton = styled(Button)<ButtonProps>(({ theme }) => ({
   },
 }));
 
+const THEORY_TITLE_MAX_LENGTH = 30;
+
 const Challenges: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -847,8 +849,10 @@ const Challenges: React.FC = () => {
                                 fullWidth
                                 label="Theory Title"
                                 value={session.theoryTitle}
-                                onChange={(e) => handleSessionChange(index, 'theoryTitle', e.target.value)}
+                                onChange={(e) => handleSessionChange(index, 'theoryTitle', e.target.value.slice(0, THEORY_TITLE_MAX_LENGTH))}
                                 required={session.includeTheory}
+                                inputProps={{ maxLength: THEORY_TITLE_MAX_LENGTH }}
+                                helperText={`${session.theoryTitle.length}/${THEORY_TITLE_MAX_LENGTH} characters`}
                                 sx={{ mt: 2 }}
                               />
                             </Grid>
