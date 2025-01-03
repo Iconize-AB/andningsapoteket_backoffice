@@ -37,6 +37,9 @@ interface SessionForm {
   includeTheory: boolean;
   theoryTitle: string;
   theoryContent: string;
+  theoryVideo: File | null;
+  theoryVideoContent: string;
+  theoryImage: File | null;
 }
 
 const initialSessionForm: SessionForm = {
@@ -50,6 +53,9 @@ const initialSessionForm: SessionForm = {
   includeTheory: false,
   theoryTitle: '',
   theoryContent: '',
+  theoryVideo: null,
+  theoryVideoContent: '',
+  theoryImage: null,
 };
 
 const PageBackground = styled(Box)(({ theme }) => ({
@@ -110,6 +116,9 @@ interface Challenge {
     author?: string;
     theoryTitle?: string;
     theoryContent?: string;
+    theoryVideo?: string;
+    theoryVideoContent?: string;
+    theoryImage?: string;
   }[];
 }
 
@@ -318,7 +327,7 @@ const Challenges: React.FC = () => {
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     index: number,
-    fileType: 'audio' | 'image'
+    fileType: 'audio' | 'image' | 'theoryVideo' | 'theoryImage'
   ) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -357,29 +366,24 @@ const Challenges: React.FC = () => {
     setTitle(challenge.title);
     setDescription(challenge.description);
     
-    // Convert challenge sessions to SessionForm format with theory data
-    const sessionForms = challenge.sessions.map(session => {
-      console.log('Session theory data:', { 
-        theoryTitle: session.theoryTitle, 
-        theoryContent: session.theoryContent 
-      }); // Debug log
-      
-      return {
-        title: session.title,
-        description: session.description,
-        longDescription: session.longDescription ?? '',
-        duration: session.duration?.toString() ?? '',
-        audio: null,
-        image: null,
-        author: session.author ?? '',
-        // Explicitly check for theoryTitle and theoryContent
-        includeTheory: Boolean(session.theoryTitle) || Boolean(session.theoryContent),
-        theoryTitle: session.theoryTitle ?? '',
-        theoryContent: session.theoryContent ?? '',
-      };
-    });
+    // Convert challenge sessions to SessionForm format with all required properties
+    const sessionForms = challenge.sessions.map(session => ({
+      title: session.title,
+      description: session.description,
+      longDescription: session.longDescription ?? '',
+      duration: session.duration?.toString() ?? '',
+      audio: null,
+      image: null,
+      author: session.author ?? '',
+      includeTheory: Boolean(session.theoryTitle) || Boolean(session.theoryContent),
+      theoryTitle: session.theoryTitle ?? '',
+      theoryContent: session.theoryContent ?? '',
+      theoryVideo: null,
+      theoryVideoContent: session.theoryVideoContent ?? '',
+      theoryImage: null
+    }));
 
-    console.log('Processed session forms:', sessionForms); // Debug log
+    console.log('Processed session forms:', sessionForms);
     setSessions(sessionForms);
     setEditingChallenge(challenge);
     setIsEditing(true);
@@ -412,6 +416,12 @@ const Challenges: React.FC = () => {
           // Changed to match backend expectation
           formData.append('image', session.image);
         }
+        if (session.theoryVideo) {
+          formData.append('theoryVideo', session.theoryVideo);
+        }
+        if (session.theoryImage) {
+          formData.append('theoryImage', session.theoryImage);
+        }
       });
 
       // Add all sessions data
@@ -427,6 +437,7 @@ const Challenges: React.FC = () => {
           includeTheory: session.includeTheory,
           theoryTitle: session.theoryTitle,
           theoryContent: session.theoryContent,
+          theoryVideoContent: session.theoryVideoContent,
         }))
       ));
 
@@ -865,6 +876,61 @@ const Challenges: React.FC = () => {
                                 multiline
                                 rows={4}
                                 required={session.includeTheory}
+                                sx={{ mt: 2 }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <input
+                                accept="video/*"
+                                style={{ display: 'none' }}
+                                id={`theory-video-upload-${index}`}
+                                type="file"
+                                onChange={(e) => handleFileChange(e, index, 'theoryVideo')}
+                              />
+                              <label htmlFor={`theory-video-upload-${index}`}>
+                                <UploadButton
+                                  variant="contained"
+                                  component="span"
+                                  startIcon={<CloudUploadIcon />}
+                                >
+                                  Upload Theory Video
+                                </UploadButton>
+                              </label>
+                              {session.theoryVideo && (
+                                <Typography variant="body2">{session.theoryVideo.name}</Typography>
+                              )}
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                              <input
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                id={`theory-image-upload-${index}`}
+                                type="file"
+                                onChange={(e) => handleFileChange(e, index, 'theoryImage')}
+                              />
+                              <label htmlFor={`theory-image-upload-${index}`}>
+                                <UploadButton
+                                  variant="contained"
+                                  component="span"
+                                  startIcon={<CloudUploadIcon />}
+                                >
+                                  Upload Theory Image
+                                </UploadButton>
+                              </label>
+                              {session.theoryImage && (
+                                <Typography variant="body2">{session.theoryImage.name}</Typography>
+                              )}
+                            </Grid>
+
+                            <Grid item xs={12}>
+                              <StyledTextField
+                                fullWidth
+                                label="Theory Video Content"
+                                value={session.theoryVideoContent}
+                                onChange={(e) => handleSessionChange(index, 'theoryVideoContent', e.target.value)}
+                                multiline
+                                rows={4}
                                 sx={{ mt: 2 }}
                               />
                             </Grid>
