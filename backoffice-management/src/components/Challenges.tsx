@@ -66,7 +66,7 @@ const PageBackground = styled(Box)(({ theme }) => ({
 }));
 
 const StyledTextField = styled(TextField)({
-  "& .MuiInputBase-input": {
+  "& .MuiInputBase-input": { 
     color: "#333",
   },
   "& .MuiInputLabel-root": {
