@@ -43,6 +43,22 @@ interface Session {
   activated: boolean;
   highlighted: boolean;
   type: 'journey' | 'condition';
+  startQuestionLeftLabel?: string;
+  startQuestionRightLabel?: string;
+  endQuestionLeftLabel?: string;
+  endQuestionRightLabel?: string;
+  startQuestion?: {
+    id: number;
+    question: string;
+    leftLabel: string;
+    rightLabel: string;
+  };
+  endQuestion?: {
+    id: number;
+    question: string;
+    leftLabel: string;
+    rightLabel: string;
+  };
 }
 
 interface NewSession {
@@ -54,12 +70,18 @@ interface NewSession {
   image: File | null;
   duration: string;
   activated: boolean;
-  startQuestion: string;
-  startQuestionLeftLabel: string;
-  startQuestionRightLabel: string;
-  endQuestion: string;
-  endQuestionLeftLabel: string;
-  endQuestionRightLabel: string;
+  startQuestion: {
+    id: number;
+    question: string;
+    leftLabel: string;
+    rightLabel: string;
+  } | null;
+  endQuestion: {
+    id: number;
+    question: string;
+    leftLabel: string;
+    rightLabel: string;
+  } | null;
   author: string;
   type: 'journey' | 'condition';
 }
@@ -161,27 +183,6 @@ const TabButton = styled(Button)<{ active?: boolean }>(({ theme, active }) => ({
   },
 }));
 
-const CategoryTag = styled(Typography)(({ theme }) => ({
-  display: 'inline-block',
-  padding: theme.spacing(0.5, 1),
-  marginRight: theme.spacing(1),
-  marginBottom: theme.spacing(0.5),
-  backgroundColor: theme.palette.grey[100],
-  borderRadius: theme.shape.borderRadius,
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-}));
-
-const TypeTag = styled(Typography)(({ theme }) => ({
-  display: 'inline-block',
-  padding: theme.spacing(0.5, 1),
-  marginBottom: theme.spacing(1),
-  backgroundColor: theme.palette.error.main,
-  color: theme.palette.error.contrastText,
-  borderRadius: theme.shape.borderRadius,
-  fontSize: '0.75rem',
-  fontWeight: 500,
-}));
 
 const SearchContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -216,12 +217,8 @@ const Content: React.FC = () => {
     image: null,
     duration: '',
     activated: true,
-    startQuestion: '',
-    startQuestionLeftLabel: '',
-    startQuestionRightLabel: '',
-    endQuestion: '',
-    endQuestionLeftLabel: '',
-    endQuestionRightLabel: '',
+    startQuestion: null,
+    endQuestion: null,
     author: '',
     type: 'journey',
   });
@@ -382,17 +379,45 @@ const Content: React.FC = () => {
       if (!token) throw new Error('No authentication token found');
 
       const formData = new FormData();
-      Object.entries(newSession).forEach(([key, value]) => {
-        if (value !== null) {
-          if (key === 'audio' || key === 'image') {
-            if (value instanceof File) {
-              formData.append(key, value);
-            }
-          } else {
-            formData.append(key, value.toString());
-          }
+      
+      // Add basic session data
+      formData.append('title', newSession.title);
+      formData.append('description', newSession.description);
+      formData.append('type', newSession.type);
+      formData.append('activated', String(newSession.activated));
+      formData.append('author', newSession.author);
+
+      // Add category or subcategory based on type
+      if (newSession.type === 'journey') {
+        formData.append('categoryId', newSession.categoryId);
+      } else if (newSession.type === 'condition') {
+        formData.append('subCategoryId', newSession.subCategoryId);
+      }
+
+      // Add files if present
+      if (newSession.audio instanceof File) {
+        formData.append('audio', newSession.audio);
+      }
+      if (newSession.image instanceof File) {
+        formData.append('image', newSession.image);
+      }
+      if (newSession.duration) {
+        formData.append('duration', newSession.duration);
+      }
+
+      // Add questions data separately
+      if (newSession.type === 'condition') {
+        if (newSession.startQuestion) {
+          formData.append('startQuestion', newSession.startQuestion.question);
+          formData.append('startQuestionLeftLabel', newSession.startQuestion.leftLabel);
+          formData.append('startQuestionRightLabel', newSession.startQuestion.rightLabel);
         }
-      });
+        if (newSession.endQuestion) {
+          formData.append('endQuestion', newSession.endQuestion.question);
+          formData.append('endQuestionLeftLabel', newSession.endQuestion.leftLabel);
+          formData.append('endQuestionRightLabel', newSession.endQuestion.rightLabel);
+        }
+      }
 
       const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/upload', {
         method: 'POST',
@@ -416,12 +441,8 @@ const Content: React.FC = () => {
         image: null, 
         duration: '', 
         activated: true, 
-        startQuestion: '', 
-        startQuestionLeftLabel: '',
-        startQuestionRightLabel: '',
-        endQuestion: '', 
-        endQuestionLeftLabel: '',
-        endQuestionRightLabel: '',
+        startQuestion: null,
+        endQuestion: null,
         author: '',
         type: 'journey',
       });
@@ -470,7 +491,15 @@ const Content: React.FC = () => {
         categoryId: selectedSession.type === 'journey' ? selectedSession.category?.id : null,
         subCategoryIds: selectedSession.type === 'condition' ? JSON.stringify(subCategoryIds) : null,
         activated: selectedSession.activated,
-        highlighted: selectedSession.highlighted
+        highlighted: selectedSession.highlighted,
+        ...(selectedSession.type === 'condition' && {
+          startQuestion: selectedSession.startQuestion,
+          startQuestionLeftLabel: selectedSession.startQuestionLeftLabel,
+          startQuestionRightLabel: selectedSession.startQuestionRightLabel,
+          endQuestion: selectedSession.endQuestion,
+          endQuestionLeftLabel: selectedSession.endQuestionLeftLabel,
+          endQuestionRightLabel: selectedSession.endQuestionRightLabel,
+        }),
       };
 
       console.log('Update request body:', requestBody);
@@ -1067,64 +1096,104 @@ const Content: React.FC = () => {
                         fullWidth
                         label="Start Question"
                         name="startQuestion"
-                        value={newSession.startQuestion}
-                        onChange={handleInputChange}
+                        value={newSession.startQuestion?.question || ''}
+                        onChange={(e) => setNewSession({
+                          ...newSession,
+                          startQuestion: {
+                            id: newSession.startQuestion?.id || 0,
+                            question: e.target.value,
+                            leftLabel: newSession.startQuestion?.leftLabel || '',
+                            rightLabel: newSession.startQuestion?.rightLabel || '',
+                          },
+                        })}
                         multiline
                         rows={2}
-                        helperText="Question to ask before the session starts (optional)"
                       />
                     </Grid>
-                    <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="Start Question Left Label"
-                        name="startQuestionLeftLabel"
-                        value={newSession.startQuestionLeftLabel}
-                        onChange={handleInputChange}
-                        helperText="Label for the left button in the start question (optional)"
-                      />
+
+                    <Grid item container xs={12} spacing={2}>
+                      <Grid item xs={6}>
+                        <StyledTextField
+                          fullWidth
+                          label="Start Question Left Label"
+                          value={newSession.startQuestion?.leftLabel || ''}
+                          onChange={(e) => setNewSession({
+                            ...newSession,
+                            startQuestion: {
+                              ...newSession.startQuestion,
+                              id: newSession.startQuestion?.id || 0,
+                              leftLabel: e.target.value,
+                            } as any,
+                          })}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <StyledTextField
+                          fullWidth
+                          label="Start Question Right Label"
+                          value={newSession.startQuestion?.rightLabel || ''}
+                          onChange={(e) => setNewSession({
+                            ...newSession,
+                            startQuestion: {
+                              ...newSession.startQuestion,
+                              id: newSession.startQuestion?.id || 0,
+                              rightLabel: e.target.value,
+                            } as any,
+                          })}
+                        />
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="Start Question Right Label"
-                        name="startQuestionRightLabel"
-                        value={newSession.startQuestionRightLabel}
-                        onChange={handleInputChange}
-                        helperText="Label for the right button in the start question (optional)"
-                      />
-                    </Grid>
+
                     <Grid item xs={12}>
                       <StyledTextField
                         fullWidth
                         label="End Question"
-                        name="endQuestion"
-                        value={newSession.endQuestion}
-                        onChange={handleInputChange}
+                        value={newSession.endQuestion?.question || ''}
+                        onChange={(e) => setNewSession({
+                          ...newSession,
+                          endQuestion: {
+                            id: newSession.endQuestion?.id || 0,
+                            question: e.target.value,
+                            leftLabel: newSession.endQuestion?.leftLabel || '',
+                            rightLabel: newSession.endQuestion?.rightLabel || '',
+                          },
+                        })}
                         multiline
                         rows={2}
-                        helperText="Question to ask after the session ends (optional)"
                       />
                     </Grid>
-                    <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="End Question Left Label"
-                        name="endQuestionLeftLabel"
-                        value={newSession.endQuestionLeftLabel}
-                        onChange={handleInputChange}
-                        helperText="Label for the left button in the end question (optional)"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="End Question Right Label"
-                        name="endQuestionRightLabel"
-                        value={newSession.endQuestionRightLabel}
-                        onChange={handleInputChange}
-                        helperText="Label for the right button in the end question (optional)"
-                      />
+
+                    <Grid item container xs={12} spacing={2}>
+                      <Grid item xs={6}>
+                        <StyledTextField
+                          fullWidth
+                          label="End Question Left Label"
+                          value={newSession.endQuestion?.leftLabel || ''}
+                          onChange={(e) => setNewSession({
+                            ...newSession,
+                            endQuestion: {
+                              ...newSession.endQuestion,
+                              id: newSession.endQuestion?.id || 0,
+                              leftLabel: e.target.value,
+                            } as any,
+                          })}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <StyledTextField
+                          fullWidth
+                          label="End Question Right Label"
+                          value={newSession.endQuestion?.rightLabel || ''}
+                          onChange={(e) => setNewSession({
+                            ...newSession,
+                            endQuestion: {
+                              ...newSession.endQuestion,
+                              id: newSession.endQuestion?.id || 0,
+                              rightLabel: e.target.value,
+                            } as any,
+                          })}
+                        />
+                      </Grid>
                     </Grid>
                   </>
                 )}
@@ -1369,6 +1438,117 @@ const Content: React.FC = () => {
                       <MenuItem value="false">No</MenuItem>
                     </StyledSelect>
                   </FormControl>
+                  {selectedSession.type === 'condition' && (
+                    <>
+                      <StyledTextField
+                        fullWidth
+                        label="Start Question"
+                        value={selectedSession.startQuestion?.question || ''}
+                        onChange={(e) => setSelectedSession({
+                          ...selectedSession,
+                          startQuestion: {
+                            id: selectedSession.startQuestion?.id || 0,
+                            question: e.target.value,
+                            leftLabel: selectedSession.startQuestion?.leftLabel || '',
+                            rightLabel: selectedSession.startQuestion?.rightLabel || '',
+                          },
+                        })}
+                        margin="normal"
+                        multiline
+                        rows={2}
+                      />
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <StyledTextField
+                            fullWidth
+                            label="Start Question Left Label"
+                            value={selectedSession.startQuestion?.leftLabel || ''}
+                            onChange={(e) => setSelectedSession({ 
+                              ...selectedSession, 
+                              startQuestion: {
+                                id: selectedSession.startQuestion?.id || 0,
+                                question: selectedSession.startQuestion?.question || '',
+                                leftLabel: e.target.value,
+                                rightLabel: selectedSession.startQuestion?.rightLabel || '',
+                              },
+                            })}
+                            margin="normal"
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <StyledTextField
+                            fullWidth
+                            label="Start Question Right Label"
+                            value={selectedSession.startQuestion?.rightLabel || ''}
+                            onChange={(e) => setSelectedSession({ 
+                              ...selectedSession, 
+                              startQuestion: {
+                                id: selectedSession.startQuestion?.id || 0,
+                                question: selectedSession.startQuestion?.question || '',
+                                leftLabel: selectedSession.startQuestion?.leftLabel || '',
+                                rightLabel: e.target.value,
+                              },
+                            })}
+                            margin="normal"
+                          />
+                        </Grid>
+                      </Grid>
+
+                      <StyledTextField
+                        fullWidth
+                        label="End Question"
+                        value={selectedSession.endQuestion?.question || ''}
+                        onChange={(e) => setSelectedSession({
+                          ...selectedSession,
+                          endQuestion: {
+                            id: selectedSession.endQuestion?.id || 0,
+                            question: e.target.value,
+                            leftLabel: selectedSession.endQuestion?.leftLabel || '',
+                            rightLabel: selectedSession.endQuestion?.rightLabel || '',
+                          },
+                        })}
+                        margin="normal"
+                        multiline
+                        rows={2}
+                      />
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <StyledTextField
+                            fullWidth
+                            label="End Question Left Label"
+                            value={selectedSession.endQuestion?.leftLabel || ''}
+                            onChange={(e) => setSelectedSession({ 
+                              ...selectedSession, 
+                              endQuestion: {
+                                id: selectedSession.endQuestion?.id || 0,
+                                question: selectedSession.endQuestion?.question || '',
+                                leftLabel: e.target.value,
+                                rightLabel: selectedSession.endQuestion?.rightLabel || '',
+                              },
+                            })}
+                            margin="normal"
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <StyledTextField
+                            fullWidth
+                            label="End Question Right Label"
+                            value={selectedSession.endQuestion?.rightLabel || ''}
+                            onChange={(e) => setSelectedSession({ 
+                              ...selectedSession, 
+                              endQuestion: {
+                                id: selectedSession.endQuestion?.id || 0,
+                                question: selectedSession.endQuestion?.question || '',
+                                leftLabel: selectedSession.endQuestion?.leftLabel || '',
+                                rightLabel: e.target.value,
+                              },
+                            })}
+                            margin="normal"
+                          />
+                        </Grid>
+                      </Grid>
+                    </>
+                  )}
                   <StyledButton type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
                     Save
                   </StyledButton>
