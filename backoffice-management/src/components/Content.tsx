@@ -29,6 +29,12 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Edit, Delete, CloudUpload, Star, Save, Search, FilterList } from '@mui/icons-material';
+
+interface Question {
+  id: number;
+  question: string;
+}
+
 interface Session {
   id: string;
   title: string;
@@ -43,21 +49,21 @@ interface Session {
   activated: boolean;
   highlighted: boolean;
   type: 'journey' | 'condition';
-  startQuestionLeftLabel?: string;
-  startQuestionRightLabel?: string;
-  endQuestionLeftLabel?: string;
-  endQuestionRightLabel?: string;
-  startQuestion?: {
-    id: number;
-    question: string;
-    leftLabel: string;
-    rightLabel: string;
+  startQuestion?: Question;
+  endQuestion?: Question;
+  startQuestionRanges?: {
+    range1: string;
+    range2: string;
+    range3: string;
+    range4: string;
+    range5: string;
   };
-  endQuestion?: {
-    id: number;
-    question: string;
-    leftLabel: string;
-    rightLabel: string;
+  endQuestionRanges?: {
+    range1: string;
+    range2: string;
+    range3: string;
+    range4: string;
+    range5: string;
   };
 }
 
@@ -70,20 +76,24 @@ interface NewSession {
   image: File | null;
   duration: string;
   activated: boolean;
-  startQuestion: {
-    id: number;
-    question: string;
-    leftLabel: string;
-    rightLabel: string;
-  } | null;
-  endQuestion: {
-    id: number;
-    question: string;
-    leftLabel: string;
-    rightLabel: string;
-  } | null;
+  startQuestion: Question | null;
+  endQuestion: Question | null;
   author: string;
   type: 'journey' | 'condition';
+  startQuestionRanges: {
+    range1: string;
+    range2: string;
+    range3: string;
+    range4: string;
+    range5: string;
+  };
+  endQuestionRanges: {
+    range1: string;
+    range2: string;
+    range3: string;
+    range4: string;
+    range5: string;
+  };
 }
 
 interface HelpOptionContent {
@@ -203,6 +213,58 @@ const getAudioDuration = async (file: File): Promise<string> => {
   });
 };
 
+const getRangePlaceholder = (rangeNum: number): string => {
+  const ranges = {
+    1: 'Very Low',
+    2: 'Low',
+    3: 'Moderate',
+    4: 'High',
+    5: 'Very High'
+  };
+  return ranges[rangeNum as keyof typeof ranges];
+};
+
+const handleRangeUpdate = (
+  type: 'start' | 'end',
+  rangeNum: number,
+  value: string,
+  session: Session
+): Session => {
+  const rangeKey = `range${rangeNum}` as keyof typeof session.startQuestionRanges;
+  
+  if (type === 'start') {
+    const currentRanges = {
+      range1: '',
+      range2: '',
+      range3: '',
+      range4: '',
+      range5: '',
+      ...session.startQuestionRanges,
+      [rangeKey]: value || ''
+    };
+
+    return {
+      ...session,
+      startQuestionRanges: currentRanges
+    };
+  } else {
+    const currentRanges = {
+      range1: '',
+      range2: '',
+      range3: '',
+      range4: '',
+      range5: '',
+      ...session.endQuestionRanges,
+      [rangeKey]: value || ''
+    };
+
+    return {
+      ...session,
+      endQuestionRanges: currentRanges
+    };
+  }
+};
+
 const Content: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [sessions, setSessions] = useState<GroupedSessions>({});
@@ -221,6 +283,20 @@ const Content: React.FC = () => {
     endQuestion: null,
     author: '',
     type: 'journey',
+    startQuestionRanges: {
+      range1: '',
+      range2: '',
+      range3: '',
+      range4: '',
+      range5: '',
+    },
+    endQuestionRanges: {
+      range1: '',
+      range2: '',
+      range3: '',
+      range4: '',
+      range5: '',
+    },
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -392,6 +468,20 @@ const Content: React.FC = () => {
         formData.append('categoryId', newSession.categoryId);
       } else if (newSession.type === 'condition') {
         formData.append('subCategoryId', newSession.subCategoryId);
+        
+        // Add start question ranges
+        formData.append('startQuestionRange1', newSession.startQuestionRanges.range1);
+        formData.append('startQuestionRange2', newSession.startQuestionRanges.range2);
+        formData.append('startQuestionRange3', newSession.startQuestionRanges.range3);
+        formData.append('startQuestionRange4', newSession.startQuestionRanges.range4);
+        formData.append('startQuestionRange5', newSession.startQuestionRanges.range5);
+
+        // Add end question ranges
+        formData.append('endQuestionRange1', newSession.endQuestionRanges.range1);
+        formData.append('endQuestionRange2', newSession.endQuestionRanges.range2);
+        formData.append('endQuestionRange3', newSession.endQuestionRanges.range3);
+        formData.append('endQuestionRange4', newSession.endQuestionRanges.range4);
+        formData.append('endQuestionRange5', newSession.endQuestionRanges.range5);
       }
 
       // Add files if present
@@ -409,13 +499,9 @@ const Content: React.FC = () => {
       if (newSession.type === 'condition') {
         if (newSession.startQuestion) {
           formData.append('startQuestion', newSession.startQuestion.question);
-          formData.append('startQuestionLeftLabel', newSession.startQuestion.leftLabel);
-          formData.append('startQuestionRightLabel', newSession.startQuestion.rightLabel);
         }
         if (newSession.endQuestion) {
           formData.append('endQuestion', newSession.endQuestion.question);
-          formData.append('endQuestionLeftLabel', newSession.endQuestion.leftLabel);
-          formData.append('endQuestionRightLabel', newSession.endQuestion.rightLabel);
         }
       }
 
@@ -445,6 +531,20 @@ const Content: React.FC = () => {
         endQuestion: null,
         author: '',
         type: 'journey',
+        startQuestionRanges: {
+          range1: '',
+          range2: '',
+          range3: '',
+          range4: '',
+          range5: '',
+        },
+        endQuestionRanges: {
+          range1: '',
+          range2: '',
+          range3: '',
+          range4: '',
+          range5: '',
+        },
       });
       setActiveTab(0);
     } catch (error) {
@@ -455,7 +555,25 @@ const Content: React.FC = () => {
   };
 
   const handleSessionClick = (session: Session) => {
-    setSelectedSession(session);
+    // Ensure we have properly initialized ranges objects
+    const sessionWithRanges = {
+      ...session,
+      startQuestionRanges: session.startQuestionRanges || {
+        range1: '',
+        range2: '',
+        range3: '',
+        range4: '',
+        range5: '',
+      },
+      endQuestionRanges: session.endQuestionRanges || {
+        range1: '',
+        range2: '',
+        range3: '',
+        range4: '',
+        range5: '',
+      }
+    };
+    setSelectedSession(sessionWithRanges);
     setIsEditing(false);
     setOpenSessionDialog(true);
   };
@@ -493,16 +611,14 @@ const Content: React.FC = () => {
         activated: selectedSession.activated,
         highlighted: selectedSession.highlighted,
         ...(selectedSession.type === 'condition' && {
-          startQuestion: selectedSession.startQuestion,
-          startQuestionLeftLabel: selectedSession.startQuestionLeftLabel,
-          startQuestionRightLabel: selectedSession.startQuestionRightLabel,
-          endQuestion: selectedSession.endQuestion,
-          endQuestionLeftLabel: selectedSession.endQuestionLeftLabel,
-          endQuestionRightLabel: selectedSession.endQuestionRightLabel,
+          startQuestion: selectedSession.startQuestion?.question,
+          endQuestion: selectedSession.endQuestion?.question,
+          startQuestionRanges: selectedSession.startQuestionRanges,
+          endQuestionRanges: selectedSession.endQuestionRanges,
         }),
       };
 
-      console.log('Update request body:', requestBody);
+      console.log('Update request body:', selectedSession);
 
       const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/update/${selectedSession.id}`, {
         method: 'PUT',
@@ -523,38 +639,31 @@ const Content: React.FC = () => {
       setSessions((prevSessions: GroupedSessions) => {
         const newSessions: GroupedSessions = { ...prevSessions };
         
-        // Add safety checks and logging
         if (!updatedSession) {
           console.error('Updated session is undefined');
           return prevSessions;
         }
 
-        // Log the structure to debug
         console.log('Updated session:', updatedSession);
 
-        // Check the response structure and access the correct path
         const categoryName = selectedSession.type === 'journey'
           ? (selectedSession.category?.name || 'Uncategorized')
           : 'Conditions';
         
-        // Remove from old category
         Object.keys(newSessions).forEach((category: string) => {
           newSessions[category] = newSessions[category].filter(
             (session: Session) => session.id !== selectedSession.id
           );
           
-          // Clean up empty categories
           if (newSessions[category].length === 0) {
             delete newSessions[category];
           }
         });
 
-        // Add to new/current category
         if (!newSessions[categoryName]) {
           newSessions[categoryName] = [];
         }
         
-        // Add the session with the correct structure
         const sessionToAdd = updatedSession.session || updatedSession;
         newSessions[categoryName].push(sessionToAdd);
 
@@ -719,6 +828,8 @@ const Content: React.FC = () => {
       setSessionToHighlight(null);
     }
   };
+
+  console.log(selectedSession);
 
   const getFilteredSessions = (sessions: GroupedSessions): GroupedSessions => {
     const filteredSessions: GroupedSessions = {};
@@ -1100,47 +1211,42 @@ const Content: React.FC = () => {
                         onChange={(e) => setNewSession({
                           ...newSession,
                           startQuestion: {
-                            id: newSession.startQuestion?.id || 0,
+                            id: newSession.startQuestion?.id ?? 0,
                             question: e.target.value,
-                            leftLabel: newSession.startQuestion?.leftLabel || '',
-                            rightLabel: newSession.startQuestion?.rightLabel || '',
-                          },
+                          }
                         })}
                         multiline
                         rows={2}
                       />
                     </Grid>
 
-                    <Grid item container xs={12} spacing={2}>
-                      <Grid item xs={6}>
-                        <StyledTextField
-                          fullWidth
-                          label="Start Question Left Label"
-                          value={newSession.startQuestion?.leftLabel || ''}
-                          onChange={(e) => setNewSession({
-                            ...newSession,
-                            startQuestion: {
-                              ...newSession.startQuestion,
-                              id: newSession.startQuestion?.id || 0,
-                              leftLabel: e.target.value,
-                            } as any,
-                          })}
-                        />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <StyledTextField
-                          fullWidth
-                          label="Start Question Right Label"
-                          value={newSession.startQuestion?.rightLabel || ''}
-                          onChange={(e) => setNewSession({
-                            ...newSession,
-                            startQuestion: {
-                              ...newSession.startQuestion,
-                              id: newSession.startQuestion?.id || 0,
-                              rightLabel: e.target.value,
-                            } as any,
-                          })}
-                        />
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                        Start Question Ranges
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {[1, 2, 3, 4, 5].map((rangeNum) => (
+                          <Grid item xs={12} key={`start-range-${rangeNum}`}>
+                            <StyledTextField
+                              fullWidth
+                              label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                              name={`range${rangeNum}`}
+                              placeholder={getRangePlaceholder(rangeNum)}
+                              value={newSession.startQuestionRanges[`range${rangeNum}` as keyof typeof newSession.startQuestionRanges] || ''}
+                              onChange={(e) => {
+                                const updatedRanges = {
+                                  ...newSession.startQuestionRanges,
+                                  [`range${rangeNum}`]: e.target.value
+                                };
+                                setNewSession({
+                                  ...newSession,
+                                  startQuestionRanges: updatedRanges
+                                });
+                              }}
+                              margin="normal"
+                            />
+                          </Grid>
+                        ))}
                       </Grid>
                     </Grid>
 
@@ -1152,47 +1258,46 @@ const Content: React.FC = () => {
                         onChange={(e) => setNewSession({
                           ...newSession,
                           endQuestion: {
-                            id: newSession.endQuestion?.id || 0,
+                            id: newSession.endQuestion?.id ?? 0,
                             question: e.target.value,
-                            leftLabel: newSession.endQuestion?.leftLabel || '',
-                            rightLabel: newSession.endQuestion?.rightLabel || '',
-                          },
+                          }
                         })}
                         multiline
                         rows={2}
                       />
                     </Grid>
 
-                    <Grid item container xs={12} spacing={2}>
-                      <Grid item xs={6}>
-                        <StyledTextField
-                          fullWidth
-                          label="End Question Left Label"
-                          value={newSession.endQuestion?.leftLabel || ''}
-                          onChange={(e) => setNewSession({
-                            ...newSession,
-                            endQuestion: {
-                              ...newSession.endQuestion,
-                              id: newSession.endQuestion?.id || 0,
-                              leftLabel: e.target.value,
-                            } as any,
-                          })}
-                        />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <StyledTextField
-                          fullWidth
-                          label="End Question Right Label"
-                          value={newSession.endQuestion?.rightLabel || ''}
-                          onChange={(e) => setNewSession({
-                            ...newSession,
-                            endQuestion: {
-                              ...newSession.endQuestion,
-                              id: newSession.endQuestion?.id || 0,
-                              rightLabel: e.target.value,
-                            } as any,
-                          })}
-                        />
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                        End Question Ranges
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {[1, 2, 3, 4, 5].map((rangeNum) => (
+                          <Grid item xs={12} key={`end-range-${rangeNum}`}>
+                            <StyledTextField
+                              fullWidth
+                              label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                              name={`range${rangeNum}`}
+                              placeholder={getRangePlaceholder(rangeNum)}
+                              value={
+                                newSession.endQuestionRanges[`range${rangeNum}` as keyof typeof newSession.endQuestionRanges] || 
+                                newSession.endQuestion?.[`range${rangeNum}` as keyof typeof newSession.endQuestion] || 
+                                ''
+                              }
+                              onChange={(e) => {
+                                const updatedRanges = {
+                                  ...newSession.endQuestionRanges,
+                                  [`range${rangeNum}`]: e.target.value
+                                };
+                                setNewSession({
+                                  ...newSession,
+                                  endQuestionRanges: updatedRanges
+                                });
+                              }}
+                              margin="normal"
+                            />
+                          </Grid>
+                        ))}
                       </Grid>
                     </Grid>
                   </>
@@ -1440,113 +1545,95 @@ const Content: React.FC = () => {
                   </FormControl>
                   {selectedSession.type === 'condition' && (
                     <>
-                      <StyledTextField
-                        fullWidth
-                        label="Start Question"
-                        value={selectedSession.startQuestion?.question || ''}
-                        onChange={(e) => setSelectedSession({
-                          ...selectedSession,
-                          startQuestion: {
-                            id: selectedSession.startQuestion?.id || 0,
-                            question: e.target.value,
-                            leftLabel: selectedSession.startQuestion?.leftLabel || '',
-                            rightLabel: selectedSession.startQuestion?.rightLabel || '',
-                          },
-                        })}
-                        margin="normal"
-                        multiline
-                        rows={2}
-                      />
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <StyledTextField
-                            fullWidth
-                            label="Start Question Left Label"
-                            value={selectedSession.startQuestion?.leftLabel || ''}
-                            onChange={(e) => setSelectedSession({ 
-                              ...selectedSession, 
-                              startQuestion: {
-                                id: selectedSession.startQuestion?.id || 0,
-                                question: selectedSession.startQuestion?.question || '',
-                                leftLabel: e.target.value,
-                                rightLabel: selectedSession.startQuestion?.rightLabel || '',
-                              },
-                            })}
-                            margin="normal"
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <StyledTextField
-                            fullWidth
-                            label="Start Question Right Label"
-                            value={selectedSession.startQuestion?.rightLabel || ''}
-                            onChange={(e) => setSelectedSession({ 
-                              ...selectedSession, 
-                              startQuestion: {
-                                id: selectedSession.startQuestion?.id || 0,
-                                question: selectedSession.startQuestion?.question || '',
-                                leftLabel: selectedSession.startQuestion?.leftLabel || '',
-                                rightLabel: e.target.value,
-                              },
-                            })}
-                            margin="normal"
-                          />
-                        </Grid>
-                      </Grid>
+                      <Box sx={{ mt: 3, mb: 2, p: 2, bgcolor: 'background.paper', border: '1px solid' }}>
+                        <Typography variant="h6" color="primary">Condition Questions Section</Typography>
+                        
+                        <StyledTextField
+                          fullWidth
+                          label="Start Question"
+                          value={selectedSession.startQuestion?.question || ''}
+                          onChange={(e) => setSelectedSession({
+                            ...selectedSession,
+                            startQuestion: {
+                              id: selectedSession.startQuestion?.id ?? 0,
+                              question: e.target.value,
+                            }
+                          })}
+                          margin="normal"
+                          multiline
+                          rows={2}
+                        />
 
-                      <StyledTextField
-                        fullWidth
-                        label="End Question"
-                        value={selectedSession.endQuestion?.question || ''}
-                        onChange={(e) => setSelectedSession({
-                          ...selectedSession,
-                          endQuestion: {
-                            id: selectedSession.endQuestion?.id || 0,
-                            question: e.target.value,
-                            leftLabel: selectedSession.endQuestion?.leftLabel || '',
-                            rightLabel: selectedSession.endQuestion?.rightLabel || '',
-                          },
-                        })}
-                        margin="normal"
-                        multiline
-                        rows={2}
-                      />
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <StyledTextField
-                            fullWidth
-                            label="End Question Left Label"
-                            value={selectedSession.endQuestion?.leftLabel || ''}
-                            onChange={(e) => setSelectedSession({ 
-                              ...selectedSession, 
-                              endQuestion: {
-                                id: selectedSession.endQuestion?.id || 0,
-                                question: selectedSession.endQuestion?.question || '',
-                                leftLabel: e.target.value,
-                                rightLabel: selectedSession.endQuestion?.rightLabel || '',
-                              },
-                            })}
-                            margin="normal"
-                          />
+                        <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, color: 'primary.main' }}>
+                          Start Question Ranges
+                        </Typography>
+
+                        <Grid container spacing={2}>
+                          {[1, 2, 3, 4, 5].map((rangeNum) => {
+                            const rangeKey = `range${rangeNum}` as keyof typeof selectedSession.startQuestionRanges;
+                            return (
+                              <Grid item xs={12} key={`start-range-${rangeNum}`}>
+                                <StyledTextField
+                                  fullWidth
+                                  label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                                  name={`range${rangeNum}`}
+                                  placeholder={getRangePlaceholder(rangeNum)}
+                                  value={
+                                    selectedSession.startQuestionRanges?.[rangeKey] || 
+                                    selectedSession.startQuestion?.[rangeKey] || 
+                                    ''
+                                  }
+                                  onChange={(e) => setSelectedSession(handleRangeUpdate('start', rangeNum, e.target.value, selectedSession))}
+                                  margin="normal"
+                                  sx={{ bgcolor: 'background.paper' }}
+                                />
+                              </Grid>
+                            );
+                          })}
                         </Grid>
-                        <Grid item xs={6}>
-                          <StyledTextField
-                            fullWidth
-                            label="End Question Right Label"
-                            value={selectedSession.endQuestion?.rightLabel || ''}
-                            onChange={(e) => setSelectedSession({ 
-                              ...selectedSession, 
-                              endQuestion: {
-                                id: selectedSession.endQuestion?.id || 0,
-                                question: selectedSession.endQuestion?.question || '',
-                                leftLabel: selectedSession.endQuestion?.leftLabel || '',
-                                rightLabel: e.target.value,
-                              },
-                            })}
-                            margin="normal"
-                          />
+
+                        <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>End Question</Typography>
+                        <StyledTextField
+                          fullWidth
+                          label="End Question"
+                          value={selectedSession.endQuestion?.question || ''}
+                          onChange={(e) => setSelectedSession({
+                            ...selectedSession,
+                            endQuestion: {
+                              id: selectedSession.endQuestion?.id ?? 0,
+                              question: e.target.value,
+                            }
+                          })}
+                          margin="normal"
+                          multiline
+                          rows={2}
+                        />
+
+                        <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>End Question Ranges</Typography>
+                        <Grid container spacing={2}>
+                          {[1, 2, 3, 4, 5].map((rangeNum) => {
+                            const rangeKey = `range${rangeNum}` as keyof typeof selectedSession.endQuestionRanges;
+                            return (
+                              <Grid item xs={12} key={`end-range-${rangeNum}`}>
+                                <StyledTextField
+                                  fullWidth
+                                  label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                                  name={`range${rangeNum}`}
+                                  placeholder={getRangePlaceholder(rangeNum)}
+                                  value={
+                                    selectedSession.endQuestionRanges?.[rangeKey] || 
+                                    selectedSession.endQuestion?.[rangeKey] || 
+                                    ''
+                                  }
+                                  onChange={(e) => setSelectedSession(handleRangeUpdate('end', rangeNum, e.target.value, selectedSession))}
+                                  margin="normal"
+                                  sx={{ bgcolor: 'background.paper' }}
+                                />
+                              </Grid>
+                            );
+                          })}
                         </Grid>
-                      </Grid>
+                      </Box>
                     </>
                   )}
                   <StyledButton type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
