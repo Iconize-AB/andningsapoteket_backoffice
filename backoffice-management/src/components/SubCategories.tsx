@@ -20,6 +20,7 @@ interface SubCategory {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  subtitle: string | null;
 }
 
 interface ExtendedButtonProps {
@@ -51,6 +52,8 @@ const SubCategories: React.FC = () => {
   const [editDescription, setEditDescription] = useState('');
   const [editImage, setEditImage] = useState<File | null>(null);
   const [deletingSubCategory, setDeletingSubCategory] = useState<SubCategory | null>(null);
+  const [newSubTitle, setNewSubTitle] = useState('');
+  const [editSubTitle, setEditSubTitle] = useState('');
 
   useEffect(() => {
     fetchSubCategories();
@@ -91,6 +94,7 @@ const SubCategories: React.FC = () => {
       const formData = new FormData();
       formData.append('name', newSubCategory.trim());
       formData.append('description', newDescription.trim());
+      formData.append('subtitle', newSubTitle.trim());
       if (selectedImage) {
         formData.append('image', selectedImage);
       }
@@ -115,6 +119,7 @@ const SubCategories: React.FC = () => {
       setNewSubCategory('');
       setNewDescription('');
       setSelectedImage(null);
+      setNewSubTitle('');
       setSuccess('SubCategory created successfully');
       setError(null);
 
@@ -128,6 +133,7 @@ const SubCategories: React.FC = () => {
     setEditingSubCategory(subCategory);
     setEditName(subCategory.name);
     setEditDescription(subCategory.description || '');
+    setEditSubTitle(subCategory.subtitle || '');
     setEditImage(null);
   };
 
@@ -148,6 +154,7 @@ const SubCategories: React.FC = () => {
       const formData = new FormData();
       formData.append('name', editName.trim());
       formData.append('description', editDescription.trim());
+      formData.append('subtitle', editSubTitle.trim());
       if (editImage) {
         formData.append('image', editImage);
       }
@@ -247,6 +254,15 @@ const SubCategories: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12} sm={4}>
+              <StyledTextField
+                fullWidth
+                value={newSubTitle}
+                onChange={(e) => setNewSubTitle(e.target.value)}
+                label="SubCategory Subtitle"
+                variant="outlined"
+              />
+            </Grid>
+            <Grid item xs={12}>
               <input
                 accept="image/*"
                 style={{ display: 'none' }}
@@ -334,6 +350,15 @@ const SubCategories: React.FC = () => {
                         />
                       </Grid>
                       <Grid item xs={12} sm={4}>
+                        <StyledTextField
+                          fullWidth
+                          value={editSubTitle}
+                          onChange={(e) => setEditSubTitle(e.target.value)}
+                          label="Subtitle"
+                          variant="outlined"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
                         <input
                           accept="image/*"
                           style={{ display: 'none' }}
@@ -399,7 +424,12 @@ const SubCategories: React.FC = () => {
                     <Box sx={{ flexGrow: 1 }}>
                       <ListItemText
                         primary={subCategory.name}
-                        secondary={subCategory.description}
+                        secondary={
+                          <>
+                            {subCategory.subtitle && <div>{subCategory.subtitle}</div>}
+                            {subCategory.description}
+                          </>
+                        }
                         primaryTypographyProps={{
                           fontWeight: 500,
                         }}
