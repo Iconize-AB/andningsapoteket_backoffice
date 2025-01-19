@@ -397,6 +397,8 @@ const Challenges: React.FC = () => {
   const [existingSessionSelections, setExistingSessionSelections] = useState<
     string[]
   >([]);
+  const [challengeImage, setChallengeImage] = useState<File | null>(null);
+  const [challengeIntroVideo, setChallengeIntroVideo] = useState<File | null>(null);
 
   useEffect(() => {
     fetchChallenges();
@@ -543,6 +545,14 @@ const Challenges: React.FC = () => {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+      
+      // Add challenge image and intro video to form data if they exist
+      if (challengeImage) {
+        formData.append("challengeImage", challengeImage);
+      }
+      if (challengeIntroVideo) {
+        formData.append("challengeIntroVideo", challengeIntroVideo);
+      }
 
       if (sessionAddType === "existing") {
         // Filter out empty strings and ensure we have valid session IDs
@@ -642,6 +652,8 @@ const Challenges: React.FC = () => {
     setEditingChallenge(null);
     setIsEditing(false);
     setExistingSessionSelections([]); // Add this line
+    setChallengeImage(null);
+    setChallengeIntroVideo(null);
   };
 
   const handleSessionAddTypeChange = (type: "new" | "existing") => {
@@ -832,6 +844,20 @@ const Challenges: React.FC = () => {
     setExistingSessionSelections([...existingSessionSelections, ""]);
   };
 
+  // Add this function to handle challenge image upload
+  const handleChallengeImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setChallengeImage(event.target.files[0]);
+    }
+  };
+
+  // Add handler for challenge intro video upload
+  const handleChallengeIntroVideoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setChallengeIntroVideo(event.target.files[0]);
+    }
+  };
+
   return (
     <PageBackground>
       <Typography
@@ -980,6 +1006,60 @@ const Challenges: React.FC = () => {
                     rows={4}
                     required
                   />
+                </Grid>
+                
+                {/* Add the challenge image upload field */}
+                <Grid item xs={12}>
+                  <input
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    id="challenge-image-upload"
+                    type="file"
+                    onChange={handleChallengeImageChange}
+                  />
+                  <label htmlFor="challenge-image-upload">
+                    <UploadButton
+                      variant="contained"
+                      component="span"
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      Upload Challenge Image
+                    </UploadButton>
+                  </label>
+                  {challengeImage && (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Selected image: {challengeImage.name}
+                      </Typography>
+                    </Box>
+                  )}
+                </Grid>
+
+                {/* Add challenge intro video upload */}
+                <Grid item xs={12}>
+                  <input
+                    accept="video/*"
+                    style={{ display: "none" }}
+                    id="challenge-intro-video-upload"
+                    type="file"
+                    onChange={handleChallengeIntroVideoChange}
+                  />
+                  <label htmlFor="challenge-intro-video-upload">
+                    <UploadButton
+                      variant="contained"
+                      component="span"
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      Upload Challenge Intro Video
+                    </UploadButton>
+                  </label>
+                  {challengeIntroVideo && (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Selected video: {challengeIntroVideo.name}
+                      </Typography>
+                    </Box>
+                  )}
                 </Grid>
 
                 <Grid item xs={12}>
