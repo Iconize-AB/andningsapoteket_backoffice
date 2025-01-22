@@ -107,6 +107,7 @@ interface Challenge {
   title: string;
   description: string;
   activated: boolean;
+  highlighted?: boolean;
   sessions: {
     id: string;
     title: string;
@@ -858,6 +859,50 @@ const Challenges: React.FC = () => {
     }
   };
 
+  // Add this new function inside the Challenges component
+  const handleToggleHighlight = async (challengeId: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(
+        `https://prodandningsapoteketbackoffice.online/v1/challenges/highlighted/${challengeId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to toggle challenge highlight status");
+      }
+
+      const data = await response.json();
+      setSuccess(data.message);
+
+      // Update the challenges list with the updated challenge data
+      setChallenges(
+        challenges.map((challenge) =>
+          challenge.id === challengeId ? data.challenge : challenge
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling challenge highlight status:", error);
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PageBackground>
       <Typography
@@ -905,18 +950,26 @@ const Challenges: React.FC = () => {
                       >
                         {challenge.description}
                       </Typography>
-                      <Box sx={{ mb: 2 }}>
+                      <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
                         <FormControlLabel
                           control={
                             <Switch
                               checked={challenge.activated}
-                              onChange={() =>
-                                handleToggleActivation(challenge.id)
-                              }
+                              onChange={() => handleToggleActivation(challenge.id)}
                               disabled={loading}
                             />
                           }
                           label={challenge.activated ? "Active" : "Inactive"}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={challenge.highlighted}
+                              onChange={() => handleToggleHighlight(challenge.id)}
+                              disabled={loading}
+                            />
+                          }
+                          label={challenge.highlighted ? "Highlighted" : "Not Highlighted"}
                         />
                       </Box>
                       <Typography variant="subtitle2" sx={{ mb: 1 }}>
