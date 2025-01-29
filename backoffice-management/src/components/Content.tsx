@@ -80,6 +80,7 @@ interface NewSession {
   endQuestion: Question | null;
   author: string;
   type: 'journey' | 'condition';
+  isStressedQuestion: boolean;
   startQuestionRanges: {
     range1: string;
     range2: string;
@@ -283,6 +284,7 @@ const Content: React.FC = () => {
     endQuestion: null,
     author: '',
     type: 'journey',
+    isStressedQuestion: false,
     startQuestionRanges: {
       range1: '',
       range2: '',
@@ -505,6 +507,9 @@ const Content: React.FC = () => {
         }
       }
 
+      // Add isStressedQuestion to formData
+      formData.append('isStressedQuestion', String(newSession.isStressedQuestion));
+
       const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/upload', {
         method: 'POST',
         mode: 'cors',
@@ -531,6 +536,7 @@ const Content: React.FC = () => {
         endQuestion: null,
         author: '',
         type: 'journey',
+        isStressedQuestion: false,
         startQuestionRanges: {
           range1: '',
           range2: '',
@@ -1194,6 +1200,19 @@ const Content: React.FC = () => {
                       value={newSession.activated ? 'true' : 'false'}
                       onChange={(e) => setNewSession({ ...newSession, activated: e.target.value === 'true' })}
                       name="activated"
+                    >
+                      <MenuItem value="true">Yes</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
+                    </StyledSelect>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Is Stressed Question</InputLabel>
+                    <StyledSelect
+                      value={newSession.isStressedQuestion ? 'true' : 'false'}
+                      onChange={(e) => setNewSession({ ...newSession, isStressedQuestion: e.target.value === 'true' })}
+                      name="isStressedQuestion"
                     >
                       <MenuItem value="true">Yes</MenuItem>
                       <MenuItem value="false">No</MenuItem>
