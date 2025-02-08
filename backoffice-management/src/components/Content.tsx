@@ -17,8 +17,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -28,7 +26,7 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material';
-import { Edit, Delete, CloudUpload, Star, Save, Search, FilterList } from '@mui/icons-material';
+import { Edit, Delete, CloudUpload, Star, Search, FilterList } from '@mui/icons-material';
 
 interface Question {
   id: number;
@@ -95,11 +93,6 @@ interface NewSession {
     range4: string;
     range5: string;
   };
-}
-
-interface HelpOptionContent {
-  option: string;
-  content: string;
 }
 
 interface ExtendedButtonProps {
@@ -305,9 +298,6 @@ const Content: React.FC = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [highlightedSessions, setHighlightedSessions] = useState<Session[]>([]);
-  const [helpOptionContents, setHelpOptionContents] = useState<HelpOptionContent[]>([]);
-  const [newHelpOption, setNewHelpOption] = useState<string>('');
-  const [helpContent, setHelpContent] = useState<string>('');
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
@@ -321,7 +311,6 @@ const Content: React.FC = () => {
   useEffect(() => {
     fetchSessions();
     fetchHighlightedSessions();
-    fetchHelpOptionContents();
     fetchCategories();
     fetchSubCategories();
   }, []);
@@ -379,24 +368,6 @@ const Content: React.FC = () => {
       setHighlightedSessions(data.items || []);
     } catch (error) {
       console.error('Error fetching highlighted sessions:', error);
-    }
-  };
-
-  const fetchHelpOptionContents = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) throw new Error('No authentication token found');
-
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/help-option-contents', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch help option contents');
-
-      const data = await response.json();
-      setHelpOptionContents(data.contents || []);
-    } catch (error) {
-      console.error('Error fetching help option contents:', error);
     }
   };
 
@@ -768,56 +739,6 @@ const Content: React.FC = () => {
     }
   };
 
-  const handleHelpContentSubmit = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) throw new Error('No authentication token found');
-
-      if (!newHelpOption) {
-        alert('Please enter a help option.');
-        return;
-      }
-
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/update-help-option-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ option: newHelpOption, content: helpContent }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update help option content');
-
-      setNewHelpOption('');
-      setHelpContent('');
-      await fetchHelpOptionContents();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-    }
-  };
-
-  const handleDeleteHelpOption = async (optionToDelete: string) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) throw new Error('No authentication token found');
-
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/help-option-content/${encodeURIComponent(optionToDelete)}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete help option content');
-      }
-
-      await fetchHelpOptionContents();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-    }
-  };
-
   const handleHighlightToggleClick = (sessionId: string, currentHighlightState: boolean) => {
     setSessionToHighlight(sessionId);
     setHighlightAction(currentHighlightState ? 'unhighlight' : 'highlight');
@@ -883,7 +804,6 @@ const Content: React.FC = () => {
       <Box sx={{ mb: 3 }}>
         <TabButton active={activeTab === 0} onClick={() => setActiveTab(0)}>Journeys</TabButton>
         <TabButton active={activeTab === 1} onClick={() => setActiveTab(1)}>Upload New Journey</TabButton>
-        <TabButton active={activeTab === 2} onClick={() => setActiveTab(2)}>Help Content</TabButton>
       </Box>
       <StyledCard>
         <CardContent>
@@ -1338,62 +1258,6 @@ const Content: React.FC = () => {
                 </Grid>
               </Grid>
             </form>
-          )}
-
-          {activeTab === 2 && (
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <StyledTextField
-                  fullWidth
-                  label="Enter Help Option"
-                  value={newHelpOption}
-                  onChange={(e) => setNewHelpOption(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <StyledTextField
-                  fullWidth
-                  label="Help Content"
-                  multiline
-                  rows={6}
-                  value={helpContent}
-                  onChange={(e) => setHelpContent(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <StyledButton
-                  onClick={handleHelpContentSubmit}
-                  variant="contained"
-                  startIcon={<Save />}
-                >
-                  Save Help Content
-                </StyledButton>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: 'text.primary' }}>Existing Help Options</Typography>
-                <List>
-                  {helpOptionContents.map((item) => (
-                    <ListItem key={item.option} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-                      <ListItemText
-                        primary={item.option}
-                        secondary={item.content}
-                        primaryTypographyProps={{ fontWeight: 500 }}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          aria-label="delete"
-                          onClick={() => handleDeleteHelpOption(item.option)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
-            </Grid>
           )}
         </CardContent>
       </StyledCard>
