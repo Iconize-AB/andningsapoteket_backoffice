@@ -93,6 +93,9 @@ interface NewSession {
     range4: string;
     range5: string;
   };
+  numberOfRounds: number;
+  roundBreathHolds: number[];
+  includeQuestions: boolean;
 }
 
 interface ExtendedButtonProps {
@@ -292,6 +295,9 @@ const Content: React.FC = () => {
       range4: '',
       range5: '',
     },
+    numberOfRounds: 2,
+    roundBreathHolds: Array(2).fill(0),
+    includeQuestions: false,
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -469,7 +475,7 @@ const Content: React.FC = () => {
       }
 
       // Add questions data separately
-      if (newSession.type === 'condition') {
+      if (newSession.type === 'condition' && newSession.includeQuestions) {
         if (newSession.startQuestion) {
           formData.append('startQuestion', newSession.startQuestion.question);
         }
@@ -480,6 +486,12 @@ const Content: React.FC = () => {
 
       // Add isStressedQuestion to formData
       formData.append('isStressedQuestion', String(newSession.isStressedQuestion));
+
+      // Add number of rounds and breath holds
+      formData.append('numberOfRounds', String(newSession.numberOfRounds));
+      newSession.roundBreathHolds.forEach((seconds, index) => {
+        formData.append(`roundBreathHolds[${index}]`, String(seconds));
+      });
 
       const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/upload', {
         method: 'POST',
@@ -522,6 +534,9 @@ const Content: React.FC = () => {
           range4: '',
           range5: '',
         },
+        numberOfRounds: 5,
+        roundBreathHolds: Array(5).fill(0),
+        includeQuestions: false,
       });
       setActiveTab(0);
     } catch (error) {
@@ -1139,106 +1154,166 @@ const Content: React.FC = () => {
                     </StyledSelect>
                   </FormControl>
                 </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Number of Rounds</InputLabel>
+                    <StyledSelect
+                      value={newSession.numberOfRounds}
+                      onChange={(e) => {
+                        const rounds = Number(e.target.value);
+                        setNewSession({
+                          ...newSession,
+                          numberOfRounds: rounds,
+                          roundBreathHolds: Array(rounds).fill(0)
+                        });
+                      }}
+                    >
+                      {[...Array(10)].map((_, i) => (
+                        <MenuItem key={i + 1} value={i + 1}>
+                          {i + 1}
+                        </MenuItem>
+                      ))}
+                    </StyledSelect>
+                  </FormControl>
+                </Grid>
+
+                {newSession.roundBreathHolds.map((seconds, index) => (
+                  <Grid item xs={12} key={index}>
+                    <StyledTextField
+                      fullWidth
+                      type="number"
+                      label={`Round ${index + 1} Breath Hold (seconds)`}
+                      value={seconds}
+                      onChange={(e) => {
+                        const newBreathHolds = [...newSession.roundBreathHolds];
+                        newBreathHolds[index] = Number(e.target.value);
+                        setNewSession({
+                          ...newSession,
+                          roundBreathHolds: newBreathHolds
+                        });
+                      }}
+                      InputProps={{
+                        inputProps: { min: 0 }
+                      }}
+                    />
+                  </Grid>
+                ))}
+
                 {newSession.type === 'condition' && (
                   <>
                     <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="Start Question"
-                        name="startQuestion"
-                        value={newSession.startQuestion?.question || ''}
-                        onChange={(e) => setNewSession({
-                          ...newSession,
-                          startQuestion: {
-                            id: newSession.startQuestion?.id ?? 0,
-                            question: e.target.value,
-                          }
-                        })}
-                        multiline
-                        rows={2}
-                      />
+                      <FormControl component="fieldset">
+                        <Typography component="legend">Include Questions and Ranges</Typography>
+                        <Switch
+                          checked={newSession.includeQuestions}
+                          onChange={(e) => setNewSession(prev => ({ ...prev, includeQuestions: e.target.checked }))}
+                          name="includeQuestions"
+                        />
+                      </FormControl>
                     </Grid>
-
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-                        Start Question Ranges
-                      </Typography>
-                      <Grid container spacing={2}>
-                        {[1, 2, 3, 4, 5].map((rangeNum) => (
-                          <Grid item xs={12} key={`start-range-${rangeNum}`}>
-                            <StyledTextField
-                              fullWidth
-                              label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
-                              name={`range${rangeNum}`}
-                              placeholder={getRangePlaceholder(rangeNum)}
-                              value={newSession.startQuestionRanges[`range${rangeNum}` as keyof typeof newSession.startQuestionRanges] || ''}
-                              onChange={(e) => {
-                                const updatedRanges = {
-                                  ...newSession.startQuestionRanges,
-                                  [`range${rangeNum}`]: e.target.value
-                                };
-                                setNewSession({
-                                  ...newSession,
-                                  startQuestionRanges: updatedRanges
-                                });
-                              }}
-                              margin="normal"
-                            />
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <StyledTextField
-                        fullWidth
-                        label="End Question"
-                        value={newSession.endQuestion?.question || ''}
-                        onChange={(e) => setNewSession({
-                          ...newSession,
-                          endQuestion: {
-                            id: newSession.endQuestion?.id ?? 0,
-                            question: e.target.value,
-                          }
-                        })}
-                        multiline
-                        rows={2}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-                        End Question Ranges
-                      </Typography>
-                      <Grid container spacing={2}>
-                        {[1, 2, 3, 4, 5].map((rangeNum) => (
-                          <Grid item xs={12} key={`end-range-${rangeNum}`}>
-                            <StyledTextField
-                              fullWidth
-                              label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
-                              name={`range${rangeNum}`}
-                              placeholder={getRangePlaceholder(rangeNum)}
-                              value={
-                                newSession.endQuestionRanges[`range${rangeNum}` as keyof typeof newSession.endQuestionRanges] || 
-                                newSession.endQuestion?.[`range${rangeNum}` as keyof typeof newSession.endQuestion] || 
-                                ''
+                    {newSession.includeQuestions && (
+                      <>
+                        <Grid item xs={12}>
+                          <StyledTextField
+                            fullWidth
+                            label="Start Question"
+                            name="startQuestion"
+                            value={newSession.startQuestion?.question || ''}
+                            onChange={(e) => setNewSession({
+                              ...newSession,
+                              startQuestion: {
+                                id: newSession.startQuestion?.id ?? 0,
+                                question: e.target.value,
                               }
-                              onChange={(e) => {
-                                const updatedRanges = {
-                                  ...newSession.endQuestionRanges,
-                                  [`range${rangeNum}`]: e.target.value
-                                };
-                                setNewSession({
-                                  ...newSession,
-                                  endQuestionRanges: updatedRanges
-                                });
-                              }}
-                              margin="normal"
-                            />
+                            })}
+                            multiline
+                            rows={2}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                            Start Question Ranges
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {[1, 2, 3, 4, 5].map((rangeNum) => (
+                              <Grid item xs={12} key={`start-range-${rangeNum}`}>
+                                <StyledTextField
+                                  fullWidth
+                                  label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                                  name={`range${rangeNum}`}
+                                  placeholder={getRangePlaceholder(rangeNum)}
+                                  value={newSession.startQuestionRanges[`range${rangeNum}` as keyof typeof newSession.startQuestionRanges] || ''}
+                                  onChange={(e) => {
+                                    const updatedRanges = {
+                                      ...newSession.startQuestionRanges,
+                                      [`range${rangeNum}`]: e.target.value
+                                    };
+                                    setNewSession({
+                                      ...newSession,
+                                      startQuestionRanges: updatedRanges
+                                    });
+                                  }}
+                                  margin="normal"
+                                />
+                              </Grid>
+                            ))}
                           </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <StyledTextField
+                            fullWidth
+                            label="End Question"
+                            name="endQuestion"
+                            value={newSession.endQuestion?.question || ''}
+                            onChange={(e) => setNewSession({
+                              ...newSession,
+                              endQuestion: {
+                                id: newSession.endQuestion?.id ?? 0,
+                                question: e.target.value,
+                              }
+                            })}
+                            multiline
+                            rows={2}
+                          />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                            End Question Ranges
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {[1, 2, 3, 4, 5].map((rangeNum) => (
+                              <Grid item xs={12} key={`end-range-${rangeNum}`}>
+                                <StyledTextField
+                                  fullWidth
+                                  label={`${(rangeNum - 1) * 20}-${rangeNum * 20} Range`}
+                                  name={`range${rangeNum}`}
+                                  placeholder={getRangePlaceholder(rangeNum)}
+                                  value={
+                                    newSession.endQuestionRanges[`range${rangeNum}` as keyof typeof newSession.endQuestionRanges] || 
+                                    newSession.endQuestion?.[`range${rangeNum}` as keyof typeof newSession.endQuestion] || 
+                                    ''
+                                  }
+                                  onChange={(e) => {
+                                    const updatedRanges = {
+                                      ...newSession.endQuestionRanges,
+                                      [`range${rangeNum}`]: e.target.value
+                                    };
+                                    setNewSession({
+                                      ...newSession,
+                                      endQuestionRanges: updatedRanges
+                                    });
+                                  }}
+                                  margin="normal"
+                                />
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Grid>
+                      </>
+                    )}
                   </>
                 )}
                 <Grid item xs={12}>
