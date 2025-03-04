@@ -96,6 +96,7 @@ interface NewSession {
   numberOfRounds: number;
   roundBreathHolds: number[];
   includeQuestions: boolean;
+  language: string;
 }
 
 interface ExtendedButtonProps {
@@ -298,6 +299,7 @@ const Content: React.FC = () => {
     numberOfRounds: 2,
     roundBreathHolds: Array(2).fill(0),
     includeQuestions: false,
+    language: 'sv',
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -313,6 +315,11 @@ const Content: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'journey' | 'condition'>('all');
   const [filterActivated, setFilterActivated] = useState<'all' | 'active' | 'inactive'>('all');
+
+  const languageOptions = [
+    { value: 'sv', label: 'Swedish' },
+    { value: 'en', label: 'English' },
+  ];
 
   useEffect(() => {
     fetchSessions();
@@ -441,7 +448,7 @@ const Content: React.FC = () => {
       formData.append('type', newSession.type);
       formData.append('activated', String(newSession.activated));
       formData.append('author', newSession.author);
-
+      formData.append('language', newSession.language);
       // Add category or subcategory based on type
       if (newSession.type === 'journey') {
         formData.append('categoryId', newSession.categoryId);
@@ -537,6 +544,7 @@ const Content: React.FC = () => {
         numberOfRounds: 5,
         roundBreathHolds: Array(5).fill(0),
         includeQuestions: false,
+        language: 'sv',
       });
       setActiveTab(0);
     } catch (error) {
@@ -1325,6 +1333,25 @@ const Content: React.FC = () => {
                     onChange={handleInputChange}
                     required
                   />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Language</InputLabel>
+                    <StyledSelect
+                      value={newSession.language}
+                      onChange={(e) => setNewSession({ 
+                        ...newSession, 
+                        language: e.target.value as string 
+                      })}
+                      label="Language"
+                    >
+                      {languageOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </StyledSelect>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <StyledButton type="submit" variant="contained" disabled={loading}>
