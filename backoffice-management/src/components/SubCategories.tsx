@@ -11,7 +11,8 @@ import {
   styled,
   Card,
   CardContent,
-  Grid
+  Grid,
+  MenuItem
 } from '@mui/material';
 import { CloudUpload, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
 
@@ -21,6 +22,7 @@ interface SubCategory {
   description: string | null;
   imageUrl: string | null;
   subtitle: string | null;
+  language: string;
 }
 
 interface ExtendedButtonProps {
@@ -54,6 +56,12 @@ const SubCategories: React.FC = () => {
   const [deletingSubCategory, setDeletingSubCategory] = useState<SubCategory | null>(null);
   const [newSubTitle, setNewSubTitle] = useState('');
   const [editSubTitle, setEditSubTitle] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('sv');
+
+  const languageOptions = [
+    { value: 'sv', label: 'Swedish' },
+    { value: 'en', label: 'English' },
+  ];
 
   useEffect(() => {
     fetchSubCategories();
@@ -95,6 +103,7 @@ const SubCategories: React.FC = () => {
       formData.append('name', newSubCategory.trim());
       formData.append('description', newDescription.trim());
       formData.append('subtitle', newSubTitle.trim());
+      formData.append('language', selectedLanguage);
       if (selectedImage) {
         formData.append('image', selectedImage);
       }
@@ -232,6 +241,22 @@ const SubCategories: React.FC = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="flex-start">
+            <Grid item xs={12} sm={4}>
+              <StyledTextField
+                select
+                fullWidth
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                label="Language"
+                variant="outlined"
+              >
+                {languageOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </StyledTextField>
+            </Grid>
             <Grid item xs={12} sm={4}>
               <StyledTextField
                 fullWidth
