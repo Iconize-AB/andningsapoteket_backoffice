@@ -234,6 +234,42 @@ const SubCategories: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
+      {deletingSubCategory && (
+        <Alert
+          severity="warning"
+          sx={{ 
+            mt: 2, 
+            p: 2, 
+            position: 'sticky',
+            top: 16,
+            zIndex: 1000,
+            boxShadow: 3
+          }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <StyledButton
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </StyledButton>
+              <StyledButton
+                size="small"
+                variant="outlined"
+                onClick={() => setDeletingSubCategory(null)}
+              >
+                Cancel
+              </StyledButton>
+            </Box>
+          }
+        >
+          Are you sure you want to delete the subcategory "{deletingSubCategory.name}"? 
+          This action cannot be undone and will also delete all associated sessions that are not linked to other subcategories.
+        </Alert>
+      )}
+
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'text.primary', mb: 4 }}>
         SubCategories
       </Typography>
@@ -484,35 +520,6 @@ const SubCategories: React.FC = () => {
           </List>
         </CardContent>
       </Card>
-
-      {deletingSubCategory && (
-        <Alert
-          severity="warning"
-          sx={{ mt: 2, p: 2 }}
-          action={
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <StyledButton
-                size="small"
-                variant="contained"
-                color="error"
-                onClick={handleConfirmDelete}
-              >
-                Delete
-              </StyledButton>
-              <StyledButton
-                size="small"
-                variant="outlined"
-                onClick={() => setDeletingSubCategory(null)}
-              >
-                Cancel
-              </StyledButton>
-            </Box>
-          }
-        >
-          Are you sure you want to delete the subcategory "{deletingSubCategory.name}"? 
-          This action cannot be undone and will also delete all associated sessions that are not linked to other subcategories.
-        </Alert>
-      )}
     </Box>
   );
 };
