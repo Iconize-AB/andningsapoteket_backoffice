@@ -19,6 +19,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TimerIcon from '@mui/icons-material/Timer';
 import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
 import BusinessIcon from '@mui/icons-material/Business';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 
 const drawerWidth = 240;
 
@@ -37,6 +38,7 @@ const menuItems: MenuItem[] = [
   { text: 'SubCategories', icon: <SubdirectoryArrowRightIcon />, path: '/subcategories' },
   { text: 'Challenges', icon: <EmojiEventsIcon />, path: '/challenges' },
   { text: 'Six Day Challenge', icon: <TimerIcon />, path: '/sixday' },
+  { text: 'Homescreen Videos', icon: <VideoLibraryIcon />, path: '/homescreen-videos' },
 ];
 
 interface SidebarProps {
