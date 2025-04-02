@@ -43,6 +43,8 @@ interface Session {
     imageUrl: string | null;
   } | null;
   categories: string[];
+  newImage?: File;
+  imageUrl?: string;
   subCategories: SessionSubCategory[];
   activated: boolean;
   highlighted: boolean;
@@ -596,38 +598,45 @@ const Content: React.FC = () => {
 
     try {
       const token = localStorage.getItem('userToken');
-      if (!token) throw new Error('No authentication token found');
+    if (!token) throw new Error('No authentication token found');
 
-      const subCategoryIds = selectedSession.type === 'condition' 
-        ? selectedSession.subCategories.map(sc => sc.subCategory.id)
-        : [];
+    const formData = new FormData();
+    
+    const requestBody = {
+      title: selectedSession.title,
+      description: selectedSession.description,
+      type: selectedSession.type,
+      categoryId: selectedSession.type === 'journey' ? selectedSession.category?.id : null,
+      subCategoryIds: selectedSession.type === 'condition' ? JSON.stringify(selectedSession.subCategories.map(sc => sc.subCategory.id)) : null,
+      activated: selectedSession.activated,
+      highlighted: selectedSession.highlighted,
+      ...(selectedSession.type === 'condition' && {
+        startQuestion: selectedSession.startQuestion?.question,
+        endQuestion: selectedSession.endQuestion?.question,
+        startQuestionRanges: selectedSession.startQuestionRanges,
+        endQuestionRanges: selectedSession.endQuestionRanges,
+      }),
+    };
 
-      const requestBody = {
-        title: selectedSession.title,
-        description: selectedSession.description,
-        type: selectedSession.type,
-        categoryId: selectedSession.type === 'journey' ? selectedSession.category?.id : null,
-        subCategoryIds: selectedSession.type === 'condition' ? JSON.stringify(subCategoryIds) : null,
-        activated: selectedSession.activated,
-        highlighted: selectedSession.highlighted,
-        ...(selectedSession.type === 'condition' && {
-          startQuestion: selectedSession.startQuestion?.question,
-          endQuestion: selectedSession.endQuestion?.question,
-          startQuestionRanges: selectedSession.startQuestionRanges,
-          endQuestionRanges: selectedSession.endQuestionRanges,
-        }),
-      };
+    // Add all request body fields to formData
+    Object.entries(requestBody).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+      }
+    });
 
-      console.log('Update request body:', selectedSession);
+    // Add new image if it exists
+    if (selectedSession.newImage instanceof File) {
+      formData.append('image', selectedSession.newImage);
+    }
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/update/${selectedSession.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+    const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/update/${selectedSession.id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -1621,9 +1630,55 @@ const Content: React.FC = () => {
                       </Box>
                     </>
                   )}
-                  <StyledButton type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-                    Save
-                  </StyledButton>
+                  {isEditing && (
+                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      {selectedSession?.imageUrl && (
+                        <Box>
+                          <Typography variant="body2" sx={{ mb: 1 }}>Current Image:</Typography>
+                          <img 
+                            src={selectedSession?.imageUrl} 
+                            alt="Current session" 
+                            style={{ 
+                              maxWidth: '100px', 
+                              height: 'auto', 
+                              borderRadius: '4px' 
+                            }} 
+                          />
+                        </Box>
+                      )}
+                      <Box>
+                        <input
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          id="edit-image-upload"
+                          type="file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedSession(prev => ({
+                                ...prev!,
+                                newImage: file
+                              }));
+                            }
+                          }}
+                        />
+                        <label htmlFor="edit-image-upload">
+                          <StyledButton
+                            variant="outlined"
+                            component="span"
+                            startIcon={<CloudUpload />}
+                          >
+                            Upload New Image
+                          </StyledButton>
+                        </label>
+                        {selectedSession.newImage && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            New image selected: {selectedSession.newImage.name}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
                 </form>
               ) : (
                 <>
