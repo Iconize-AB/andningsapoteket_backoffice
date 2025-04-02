@@ -25,6 +25,7 @@ interface VideoConfig {
   id: string;
   name: string;
   backgroundVideoUrl: string;
+  thumbnailUrl: string | null;
   gradientColors: string[];
   gradientLocations: number[];
   createdAt: string;
@@ -59,6 +60,7 @@ const HomeScreenVideos: React.FC = () => {
   const [videos, setVideos] = useState<VideoConfig[]>([]);
   const [name, setName] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [gradientColor1, setGradientColor1] = useState('#000000');
   const [gradientColor2, setGradientColor2] = useState('#014156');
   const [gradientColor3, setGradientColor3] = useState('#272C3D');
@@ -109,6 +111,9 @@ const HomeScreenVideos: React.FC = () => {
       const formData = new FormData();
       formData.append('name', name.trim());
       formData.append('backgroundVideo', selectedVideo);
+      if (selectedThumbnail) {
+        formData.append('thumbnail', selectedThumbnail);
+      }
       formData.append('gradientColor1', isTransparent1 ? 'transparent' : gradientColor1);
       formData.append('gradientColor2', isTransparent2 ? 'transparent' : gradientColor2);
       formData.append('gradientColor3', isTransparent3 ? 'transparent' : gradientColor3);
@@ -132,6 +137,7 @@ const HomeScreenVideos: React.FC = () => {
       setSuccess('Video configuration created successfully');
       setName('');
       setSelectedVideo(null);
+      setSelectedThumbnail(null);
       fetchVideos();
 
       setTimeout(() => setSuccess(null), 3000);
@@ -219,117 +225,145 @@ const HomeScreenVideos: React.FC = () => {
               )}
             </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isTransparent1}
-                      onChange={(e) => setIsTransparent1(e.target.checked)}
-                    />
-                  }
-                  label="Transparent"
-                />
-                {!isTransparent1 && (
-                  <>
-                    <StyledTextField
-                      fullWidth
-                      type="color"
-                      value={gradientColor1}
-                      onChange={(e) => setGradientColor1(e.target.value)}
-                      label="Gradient Color 1"
-                      variant="outlined"
-                    />
-                    <ColorPreview color={gradientColor1} />
-                  </>
-                )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isTransparent2}
-                      onChange={(e) => setIsTransparent2(e.target.checked)}
-                    />
-                  }
-                  label="Transparent"
-                />
-                {!isTransparent2 && (
-                  <>
-                    <StyledTextField
-                      fullWidth
-                      type="color"
-                      value={gradientColor2}
-                      onChange={(e) => setGradientColor2(e.target.value)}
-                      label="Gradient Color 2"
-                      variant="outlined"
-                    />
-                    <ColorPreview color={gradientColor2} />
-                  </>
-                )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isTransparent3}
-                      onChange={(e) => setIsTransparent3(e.target.checked)}
-                    />
-                  }
-                  label="Transparent"
-                />
-                {!isTransparent3 && (
-                  <>
-                    <StyledTextField
-                      fullWidth
-                      type="color"
-                      value={gradientColor3}
-                      onChange={(e) => setGradientColor3(e.target.value)}
-                      label="Gradient Color 3"
-                      variant="outlined"
-                    />
-                    <ColorPreview color={gradientColor3} />
-                  </>
-                )}
-              </Box>
+            <Grid item xs={12} sm={6}>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="thumbnail-file-upload"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setSelectedThumbnail(file);
+                }}
+              />
+              <label htmlFor="thumbnail-file-upload">
+                <StyledButton
+                  variant="outlined"
+                  component="span"
+                  startIcon={<CloudUpload />}
+                  fullWidth
+                >
+                  Upload Thumbnail
+                </StyledButton>
+              </label>
+              {selectedThumbnail && (
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  Selected: {selectedThumbnail.name}
+                </Typography>
+              )}
             </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <StyledTextField
-                fullWidth
-                type="number"
-                inputProps={{ step: 0.01, min: 0, max: 1 }}
-                value={gradientLocation1}
-                onChange={(e) => setGradientLocation1(e.target.value)}
-                label="Gradient Location 1"
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <StyledTextField
-                fullWidth
-                type="number"
-                inputProps={{ step: 0.01, min: 0, max: 1 }}
-                value={gradientLocation2}
-                onChange={(e) => setGradientLocation2(e.target.value)}
-                label="Gradient Location 2"
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <StyledTextField
-                fullWidth
-                type="number"
-                inputProps={{ step: 0.01, min: 0, max: 1 }}
-                value={gradientLocation3}
-                onChange={(e) => setGradientLocation3(e.target.value)}
-                label="Gradient Location 3"
-                variant="outlined"
-              />
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isTransparent1}
+                        onChange={(e) => setIsTransparent1(e.target.checked)}
+                      />
+                    }
+                    label="Transparent"
+                  />
+                  {!isTransparent1 && (
+                    <>
+                      <StyledTextField
+                        fullWidth
+                        type="color"
+                        value={gradientColor1}
+                        onChange={(e) => setGradientColor1(e.target.value)}
+                        label="Gradient Color 1"
+                        variant="outlined"
+                      />
+                      <ColorPreview color={gradientColor1} />
+                    </>
+                  )}
+                  <StyledTextField
+                    fullWidth
+                    type="number"
+                    inputProps={{ step: 0.01, min: 0, max: 1 }}
+                    value={gradientLocation1}
+                    onChange={(e) => setGradientLocation1(e.target.value)}
+                    label="Gradient Location 1"
+                    variant="outlined"
+                    sx={{ mt: 2 }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isTransparent2}
+                        onChange={(e) => setIsTransparent2(e.target.checked)}
+                      />
+                    }
+                    label="Transparent"
+                  />
+                  {!isTransparent2 && (
+                    <>
+                      <StyledTextField
+                        fullWidth
+                        type="color"
+                        value={gradientColor2}
+                        onChange={(e) => setGradientColor2(e.target.value)}
+                        label="Gradient Color 2"
+                        variant="outlined"
+                      />
+                      <ColorPreview color={gradientColor2} />
+                    </>
+                  )}
+                  <StyledTextField
+                    fullWidth
+                    type="number"
+                    inputProps={{ step: 0.01, min: 0, max: 1 }}
+                    value={gradientLocation2}
+                    onChange={(e) => setGradientLocation2(e.target.value)}
+                    label="Gradient Location 2"
+                    variant="outlined"
+                    sx={{ mt: 2 }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isTransparent3}
+                        onChange={(e) => setIsTransparent3(e.target.checked)}
+                      />
+                    }
+                    label="Transparent"
+                  />
+                  {!isTransparent3 && (
+                    <>
+                      <StyledTextField
+                        fullWidth
+                        type="color"
+                        value={gradientColor3}
+                        onChange={(e) => setGradientColor3(e.target.value)}
+                        label="Gradient Color 3"
+                        variant="outlined"
+                      />
+                      <ColorPreview color={gradientColor3} />
+                    </>
+                  )}
+                  <StyledTextField
+                    fullWidth
+                    type="number"
+                    inputProps={{ step: 0.01, min: 0, max: 1 }}
+                    value={gradientLocation3}
+                    onChange={(e) => setGradientLocation3(e.target.value)}
+                    label="Gradient Location 3"
+                    variant="outlined"
+                    sx={{ mt: 2 }}
+                  />
+                </Box>
+              </Grid>
             </Grid>
 
             <Grid item xs={12}>
@@ -381,11 +415,18 @@ const HomeScreenVideos: React.FC = () => {
                       Delete
                     </StyledButton>
                   </Box>
-                  <Box sx={{ mt: 1 }}>
+                  <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
                     <video width="320" controls>
                       <source src={video.backgroundVideoUrl} type="video/mp4" />
                       Your browser does not support the video tag.
                     </video>
+                    {video.thumbnailUrl && (
+                      <img 
+                        src={video.thumbnailUrl} 
+                        alt="Video thumbnail" 
+                        style={{ width: '320px', objectFit: 'contain' }} 
+                      />
+                    )}
                   </Box>
                   <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                     {video.gradientColors.map((color, index) => (
