@@ -26,6 +26,7 @@ interface VideoConfig {
   name: string;
   backgroundVideoUrl: string;
   thumbnailUrl: string | null;
+  soundUrl: string | null;
   gradientColors: string[];
   gradientLocations: number[];
   createdAt: string;
@@ -61,6 +62,7 @@ const HomeScreenVideos: React.FC = () => {
   const [name, setName] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const [selectedSound, setSelectedSound] = useState<File | null>(null);
   const [gradientColor1, setGradientColor1] = useState('#000000');
   const [gradientColor2, setGradientColor2] = useState('#014156');
   const [gradientColor3, setGradientColor3] = useState('#272C3D');
@@ -114,6 +116,9 @@ const HomeScreenVideos: React.FC = () => {
       if (selectedThumbnail) {
         formData.append('thumbnail', selectedThumbnail);
       }
+      if (selectedSound) {
+        formData.append('sound', selectedSound);
+      }
       formData.append('gradientColor1', isTransparent1 ? 'transparent' : gradientColor1);
       formData.append('gradientColor2', isTransparent2 ? 'transparent' : gradientColor2);
       formData.append('gradientColor3', isTransparent3 ? 'transparent' : gradientColor3);
@@ -138,6 +143,7 @@ const HomeScreenVideos: React.FC = () => {
       setName('');
       setSelectedVideo(null);
       setSelectedThumbnail(null);
+      setSelectedSound(null);
       fetchVideos();
 
       setTimeout(() => setSuccess(null), 3000);
@@ -249,6 +255,34 @@ const HomeScreenVideos: React.FC = () => {
               {selectedThumbnail && (
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                   Selected: {selectedThumbnail.name}
+                </Typography>
+              )}
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <input
+                accept="audio/*"
+                style={{ display: 'none' }}
+                id="sound-file-upload"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setSelectedSound(file);
+                }}
+              />
+              <label htmlFor="sound-file-upload">
+                <StyledButton
+                  variant="outlined"
+                  component="span"
+                  startIcon={<CloudUpload />}
+                  fullWidth
+                >
+                  Upload Sound
+                </StyledButton>
+              </label>
+              {selectedSound && (
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  Selected: {selectedSound.name}
                 </Typography>
               )}
             </Grid>
@@ -441,6 +475,14 @@ const HomeScreenVideos: React.FC = () => {
                       </Box>
                     ))}
                   </Box>
+                  {video.soundUrl && (
+                    <Box sx={{ mt: 1 }}>
+                      <audio controls>
+                        <source src={video.soundUrl} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </Box>
+                  )}
                 </Box>
               </ListItem>
             ))}
