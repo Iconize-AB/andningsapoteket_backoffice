@@ -99,6 +99,7 @@ interface NewSession {
   roundBreathHolds: number[];
   includeQuestions: boolean;
   language: string;
+  conditionCategory?: string;
 }
 
 interface ExtendedButtonProps {
@@ -302,6 +303,7 @@ const Content: React.FC = () => {
     roundBreathHolds: Array(2).fill(0),
     includeQuestions: false,
     language: 'sv',
+    conditionCategory: '',
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -456,6 +458,9 @@ const Content: React.FC = () => {
         formData.append('categoryId', newSession.categoryId);
       } else if (newSession.type === 'condition') {
         formData.append('subCategoryId', newSession.subCategoryId);
+        if (newSession.conditionCategory) {
+          formData.append('conditionCategory', newSession.conditionCategory);
+        }
         
         // Add start question ranges
         formData.append('startQuestionRange1', newSession.startQuestionRanges.range1);
@@ -547,6 +552,7 @@ const Content: React.FC = () => {
         roundBreathHolds: Array(5).fill(0),
         includeQuestions: false,
         language: 'sv',
+        conditionCategory: '',
       });
       setActiveTab(0);
     } catch (error) {
@@ -1362,6 +1368,21 @@ const Content: React.FC = () => {
                     </StyledSelect>
                   </FormControl>
                 </Grid>
+                {newSession.type === 'condition' && (
+                  <>
+                    <Grid item xs={12}>
+                      <StyledTextField
+                        fullWidth
+                        label="Condition Category"
+                        name="conditionCategory"
+                        value={newSession.conditionCategory}
+                        onChange={handleInputChange}
+                        inputProps={{ maxLength: 12 }}
+                        helperText="Max 12 characters"
+                      />
+                </Grid>
+                </>
+                )}
                 <Grid item xs={12}>
                   <StyledButton type="submit" variant="contained" disabled={loading}>
                     {loading ? <CircularProgress size={24} sx={{ color: 'common.white' }} /> : "Upload Session"}
