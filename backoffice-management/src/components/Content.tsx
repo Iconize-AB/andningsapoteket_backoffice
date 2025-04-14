@@ -100,6 +100,7 @@ interface NewSession {
   includeQuestions: boolean;
   language: string;
   conditionCategory?: string;
+  audioPlayerImage: File | null;
 }
 
 interface ExtendedButtonProps {
@@ -304,6 +305,7 @@ const Content: React.FC = () => {
     includeQuestions: false,
     language: 'sv',
     conditionCategory: '',
+    audioPlayerImage: null,
   });
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -507,6 +509,11 @@ const Content: React.FC = () => {
         formData.append(`roundBreathHolds[${index}]`, String(seconds));
       });
 
+      // Add audio player image if present
+      if (newSession.audioPlayerImage instanceof File) {
+        formData.append('audioPlayerImage', newSession.audioPlayerImage);
+      }
+
       const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/upload', {
         method: 'POST',
         mode: 'cors',
@@ -553,6 +560,7 @@ const Content: React.FC = () => {
         includeQuestions: false,
         language: 'sv',
         conditionCategory: '',
+        audioPlayerImage: null,
       });
       setActiveTab(0);
     } catch (error) {
@@ -1151,6 +1159,28 @@ const Content: React.FC = () => {
                       </Typography>
                     )}
                   </Grid>
+                <Grid item xs={12}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="audio-player-image-upload"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setNewSession({ ...newSession, audioPlayerImage: file });
+                    }}
+                  />
+                  <label htmlFor="audio-player-image-upload">
+                    <StyledButton variant="outlined" component="span" startIcon={<CloudUpload />}>
+                      Upload Audio Player Image
+                    </StyledButton>
+                  </label>
+                  {newSession.audioPlayerImage && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      {newSession.audioPlayerImage.name}
+                    </Typography>
+                  )}
+                </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel>Activate session</InputLabel>
