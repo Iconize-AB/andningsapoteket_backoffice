@@ -65,6 +65,7 @@ interface Session {
     range4: string;
     range5: string;
   };
+  conditionCategory?: string;
 }
 
 interface NewSession {
@@ -624,6 +625,7 @@ const Content: React.FC = () => {
       subCategoryIds: selectedSession.type === 'condition' ? JSON.stringify(selectedSession.subCategories.map(sc => sc.subCategory.id)) : null,
       activated: selectedSession.activated,
       highlighted: selectedSession.highlighted,
+      conditionCategory: selectedSession.type === 'condition' ? selectedSession.conditionCategory : null,
       ...(selectedSession.type === 'condition' && {
         startQuestion: selectedSession.startQuestion?.question,
         endQuestion: selectedSession.endQuestion?.question,
@@ -1410,8 +1412,8 @@ const Content: React.FC = () => {
                         inputProps={{ maxLength: 12 }}
                         helperText="Max 12 characters"
                       />
-                </Grid>
-                </>
+                    </Grid>
+                  </>
                 )}
                 <Grid item xs={12}>
                   <StyledButton type="submit" variant="contained" disabled={loading}>
@@ -1679,6 +1681,22 @@ const Content: React.FC = () => {
                           })}
                         </Grid>
                       </Box>
+                    </>
+                  )}
+                  {selectedSession.type === 'condition' && (
+                    <>
+                      <StyledTextField
+                        fullWidth
+                        label="Condition Category"
+                        value={selectedSession.conditionCategory || ''}
+                        onChange={(e) => setSelectedSession({
+                          ...selectedSession,
+                          conditionCategory: e.target.value
+                        })}
+                        margin="normal"
+                        inputProps={{ maxLength: 12 }}
+                        helperText="Max 12 characters"
+                      />
                     </>
                   )}
                   {isEditing && (
