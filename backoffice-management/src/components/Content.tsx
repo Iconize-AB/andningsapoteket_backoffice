@@ -66,6 +66,7 @@ interface Session {
     range5: string;
   };
   conditionCategory?: string;
+  sessionEndDuration: number;
 }
 
 interface NewSession {
@@ -76,6 +77,7 @@ interface NewSession {
   audio: File | null;
   image: File | null;
   duration: string;
+  sessionEndDuration: number;
   activated: boolean;
   startQuestion: Question | null;
   endQuestion: Question | null;
@@ -281,6 +283,7 @@ const Content: React.FC = () => {
     audio: null,
     image: null,
     duration: '',
+    sessionEndDuration: 0,
     activated: true,
     startQuestion: null,
     endQuestion: null,
@@ -456,6 +459,7 @@ const Content: React.FC = () => {
       formData.append('activated', String(newSession.activated));
       formData.append('author', newSession.author);
       formData.append('language', newSession.language);
+      formData.append('sessionEndDuration', String(newSession.sessionEndDuration));
       // Add category or subcategory based on type
       if (newSession.type === 'journey') {
         formData.append('categoryId', newSession.categoryId);
@@ -536,6 +540,7 @@ const Content: React.FC = () => {
         audio: null, 
         image: null, 
         duration: '', 
+        sessionEndDuration: 0,
         activated: true, 
         startQuestion: null,
         endQuestion: null,
@@ -626,6 +631,7 @@ const Content: React.FC = () => {
       activated: selectedSession.activated,
       highlighted: selectedSession.highlighted,
       conditionCategory: selectedSession.type === 'condition' ? selectedSession.conditionCategory : null,
+      sessionEndDuration: selectedSession.sessionEndDuration,
       ...(selectedSession.type === 'condition' && {
         startQuestion: selectedSession.startQuestion?.question,
         endQuestion: selectedSession.endQuestion?.question,
@@ -1182,6 +1188,21 @@ const Content: React.FC = () => {
                       {newSession.audioPlayerImage.name}
                     </Typography>
                   )}
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    label="Session End Duration (seconds)"
+                    type="number"
+                    value={newSession.sessionEndDuration || 0}
+                    onChange={(e) => setNewSession({
+                      ...newSession,
+                      sessionEndDuration: parseFloat(e.target.value) || 0
+                    })}
+                    margin="normal"
+                    inputProps={{ min: 0, step: 0.1 }}
+                    helperText="Enter when the session should end in seconds (e.g., 330 for 5:30)"
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
@@ -1748,6 +1769,19 @@ const Content: React.FC = () => {
                       </Box>
                     </Box>
                   )}
+                  <StyledTextField
+                    fullWidth
+                    label="Session End Duration (seconds)"
+                    type="number"
+                    value={selectedSession.sessionEndDuration || 0}
+                    onChange={(e) => setSelectedSession({
+                      ...selectedSession,
+                      sessionEndDuration: parseFloat(e.target.value) || 0
+                    })}
+                    margin="normal"
+                    inputProps={{ min: 0, step: 0.1 }}
+                    helperText="Enter when the session should end in seconds (e.g., 330 for 5:30)"
+                  />
                 </form>
               ) : (
                 <>
