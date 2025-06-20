@@ -30,6 +30,7 @@ interface VideoConfig {
   soundUrl: string | null;
   gradientColors: string[];
   gradientLocations: number[];
+  topPadding: number;
   createdAt: string;
 }
 
@@ -70,6 +71,7 @@ const HomeScreenVideos: React.FC = () => {
   const [gradientLocation1, setGradientLocation1] = useState('0');
   const [gradientLocation2, setGradientLocation2] = useState('0.37');
   const [gradientLocation3, setGradientLocation3] = useState('0.71');
+  const [topPadding, setTopPadding] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isTransparent1, setIsTransparent1] = useState(false);
@@ -129,6 +131,7 @@ const HomeScreenVideos: React.FC = () => {
       formData.append('gradientLocation1', gradientLocation1);
       formData.append('gradientLocation2', gradientLocation2);
       formData.append('gradientLocation3', gradientLocation3);
+      formData.append('topPadding', topPadding.toString());
 
       const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos/create', {
         method: 'POST',
@@ -206,6 +209,7 @@ const HomeScreenVideos: React.FC = () => {
     setGradientLocation1(loc1.toString());
     setGradientLocation2(loc2.toString());
     setGradientLocation3(loc3.toString());
+    setTopPadding(video.topPadding);
     setOpenEditDialog(true);
   };
 
@@ -226,6 +230,7 @@ const HomeScreenVideos: React.FC = () => {
     setGradientLocation1('0');
     setGradientLocation2('0.37');
     setGradientLocation3('0.71');
+    setTopPadding(0);
     setIsTransparent1(false);
     setIsTransparent2(false);
     setIsTransparent3(false);
@@ -288,6 +293,9 @@ const HomeScreenVideos: React.FC = () => {
         formData.append('gradientLocation2', gradientLocation2);
         formData.append('gradientLocation3', gradientLocation3);
       }
+
+      // Always append topPadding
+      formData.append('topPadding', topPadding.toString());
 
       const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos/${editingVideo.id}`, {
         method: 'PUT',
@@ -529,29 +537,42 @@ const HomeScreenVideos: React.FC = () => {
                   />
                 </Box>
               </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <StyledTextField
+                  fullWidth
+                  type="number"
+                  inputProps={{ step: 1, min: 0 }}
+                  value={topPadding}
+                  onChange={(e) => setTopPadding(Number(e.target.value))}
+                  label="Top Padding"
+                  variant="outlined"
+                  helperText="Padding in pixels from the top"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <StyledButton
+                  onClick={handleSubmit}
+                  variant="contained"
+                  startIcon={<Add />}
+                >
+                  Create Video Configuration
+                </StyledButton>
+              </Grid>
             </Grid>
 
-            <Grid item xs={12}>
-              <StyledButton
-                onClick={handleSubmit}
-                variant="contained"
-                startIcon={<Add />}
-              >
-                Create Video Configuration
-              </StyledButton>
-            </Grid>
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                {success}
+              </Alert>
+            )}
           </Grid>
-
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              {success}
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
@@ -615,6 +636,11 @@ const HomeScreenVideos: React.FC = () => {
                         </Typography>
                       </Box>
                     ))}
+                  </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      Top Padding: {video.topPadding}px
+                    </Typography>
                   </Box>
                   {video.soundUrl && (
                     <Box sx={{ mt: 1 }}>
@@ -844,6 +870,19 @@ const HomeScreenVideos: React.FC = () => {
                     sx={{ mt: 2 }}
                   />
                 </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <StyledTextField
+                  fullWidth
+                  type="number"
+                  inputProps={{ step: 1, min: 0 }}
+                  value={topPadding}
+                  onChange={(e) => setTopPadding(Number(e.target.value))}
+                  label="Top Padding"
+                  variant="outlined"
+                  helperText="Padding in pixels from the top"
+                />
               </Grid>
             </Grid>
           </Grid>
