@@ -20,14 +20,20 @@ import {
   SelectChangeEvent,
   Card,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SendIcon from '@mui/icons-material/Send';
+import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 
 interface User {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   role: string;
   createdAt: string;
@@ -168,6 +174,9 @@ const Users: React.FC = () => {
   });
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -263,6 +272,56 @@ const Users: React.FC = () => {
     } finally {
       setCreatingUser(false);
     }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setDeletingUser(userToDelete.id);
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/users/delete/${userToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete user');
+      }
+
+      const data = await response.json();
+      console.log('User deleted successfully:', data.message);
+      
+      // Remove the user from the local state
+      setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
+      
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setDeletingUser(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
   };
 
   useEffect(() => {
@@ -371,7 +430,7 @@ const Users: React.FC = () => {
                   ) : (
                     users.map((user) => (
                       <TableRow key={user.id}>
-                        <TableCell>{user.name}</TableCell>
+                        <TableCell>{user.fullName || "No name"}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -394,22 +453,48 @@ const Users: React.FC = () => {
                           </StatusChip>
                         </TableCell>
                         <TableCell align="right">
-                          {user.viewedOnBoarding !== "completed" && (
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                            {user.viewedOnBoarding !== "completed" && (
+                              <StyledButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={sendingReminder === user.email ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  <SendIcon />
+                                )}
+                                onClick={() => handleSendReminderOnboarding(user.email)}
+                                disabled={sendingReminder === user.email}
+                                sx={{ minWidth: '100px' }}
+                              >
+                                {sendingReminder === user.email ? 'Sending...' : 'Resend'}
+                              </StyledButton>
+                            )}
                             <StyledButton
                               variant="outlined"
                               size="small"
-                              startIcon={sendingReminder === user.email ? (
+                              color="error"
+                              startIcon={deletingUser === user.id ? (
                                 <CircularProgress size={20} color="inherit" />
                               ) : (
-                                <SendIcon />
+                                <DeleteIcon />
                               )}
-                              onClick={() => handleSendReminderOnboarding(user.email)}
-                              disabled={sendingReminder === user.email}
-                              sx={{ minWidth: '100px' }}
+                              onClick={() => handleDeleteUser(user)}
+                              disabled={deletingUser === user.id}
+                              sx={{ 
+                                minWidth: '80px',
+                                borderColor: 'error.main',
+                                color: 'error.main',
+                                '&:hover': {
+                                  backgroundColor: 'error.light',
+                                  borderColor: 'error.dark',
+                                  color: 'error.contrastText',
+                                },
+                              }}
                             >
-                              {sendingReminder === user.email ? 'Sending...' : 'Resend'}
+                              {deletingUser === user.id ? 'Deleting...' : 'Delete'}
                             </StyledButton>
-                          )}
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))
@@ -505,6 +590,38 @@ const Users: React.FC = () => {
           </CardContent>
         </StyledCard>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Delete User
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the user "{userToDelete?.fullName || userToDelete?.email}"? 
+            This action cannot be undone and will permanently delete the user and all their associated data.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDeleteUser} 
+            color="error" 
+            variant="contained"
+            disabled={deletingUser !== null}
+            startIcon={deletingUser && <CircularProgress size={20} color="inherit" />}
+          >
+            {deletingUser ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
