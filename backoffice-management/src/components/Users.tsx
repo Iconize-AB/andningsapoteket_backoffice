@@ -27,7 +27,6 @@ import {
   DialogContentText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -37,8 +36,8 @@ interface User {
   email: string;
   role: string;
   createdAt: string;
-  updatedAt: string;
   viewedOnBoarding: string | null;
+  subscriptionType?: string | null;
 }
 
 interface NewUser {
@@ -119,24 +118,6 @@ const StyledForm = styled('form')(({ theme }) => ({
   },
 }));
 
-const StatusChip = styled('span')<{ status: string | null }>(({ theme, status }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  height: '24px',
-  padding: '0 8px',
-  fontSize: '0.75rem',
-  borderRadius: '12px',
-  fontWeight: 500,
-  ...(status === 'completed' && {
-    backgroundColor: theme.palette.success.light,
-    color: theme.palette.success.dark,
-  }),
-  ...(status !== 'completed' && {
-    backgroundColor: theme.palette.warning.light,
-    color: theme.palette.warning.dark,
-  }),
-}));
-
 const StyledButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
   borderRadius: theme.shape.borderRadius,
@@ -172,7 +153,6 @@ const Users: React.FC = () => {
     couponCode: '',
     subscriptionPeriod: '',
   });
-  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -198,39 +178,38 @@ const Users: React.FC = () => {
     }));
   };
 
-  
-  const handleSendReminderOnboarding = async (email: string) => {
-    try {
-      setSendingReminder(email);
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+  // const handleSendReminderOnboarding = async (email: string) => {
+  //   try {
+  //     setSendingReminder(email);
+  //     const token = localStorage.getItem('userToken');
+  //     if (!token) {
+  //       throw new Error('No authentication token found');
+  //     }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/user/reminder-onboarding', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors',
-        credentials: 'omit',
-        body: JSON.stringify({ email }),
-      });
+  //     const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/user/reminder-onboarding', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Content-Type': 'application/json',
+  //       },
+  //       mode: 'cors',
+  //       credentials: 'omit',
+  //       body: JSON.stringify({ email }),
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send reminder');
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || 'Failed to send reminder');
+  //     }
 
-      const data = await response.json();
-      console.log('Reminder sent successfully:', data.message);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-    } finally {
-      setSendingReminder(null);
-    }
-  };
+  //     const data = await response.json();
+  //     console.log('Reminder sent successfully:', data.message);
+  //   } catch (error) {
+  //     setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+  //   } finally {
+  //     setSendingReminder(null);
+  //   }
+  // };
 
   const handleCreateUser = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -412,9 +391,8 @@ const Users: React.FC = () => {
                     <TableCell sx={{ fontWeight: 500 }}>Name</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>Email</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>Subscription</TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>Created</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>Updated</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 500 }} align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -439,62 +417,39 @@ const Users: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {new Date(user.createdAt).toLocaleDateString()}
+                            {user.subscriptionType || 'None'}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {new Date(user.updatedAt).toLocaleDateString()}
+                            {new Date(user.createdAt).toLocaleDateString()}
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          <StatusChip status={user.viewedOnBoarding}>
-                            {user.viewedOnBoarding === 'completed' ? 'Completed' : 'Pending'}
-                          </StatusChip>
-                        </TableCell>
                         <TableCell align="right">
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                            {user.viewedOnBoarding !== "completed" && (
-                              <StyledButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={sendingReminder === user.email ? (
-                                  <CircularProgress size={20} color="inherit" />
-                                ) : (
-                                  <SendIcon />
-                                )}
-                                onClick={() => handleSendReminderOnboarding(user.email)}
-                                disabled={sendingReminder === user.email}
-                                sx={{ minWidth: '100px' }}
-                              >
-                                {sendingReminder === user.email ? 'Sending...' : 'Resend'}
-                              </StyledButton>
+                          <StyledButton
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            startIcon={deletingUser === user.id ? (
+                              <CircularProgress size={20} color="inherit" />
+                            ) : (
+                              <DeleteIcon />
                             )}
-                            <StyledButton
-                              variant="outlined"
-                              size="small"
-                              color="error"
-                              startIcon={deletingUser === user.id ? (
-                                <CircularProgress size={20} color="inherit" />
-                              ) : (
-                                <DeleteIcon />
-                              )}
-                              onClick={() => handleDeleteUser(user)}
-                              disabled={deletingUser === user.id}
-                              sx={{ 
-                                minWidth: '80px',
-                                borderColor: 'error.main',
-                                color: 'error.main',
-                                '&:hover': {
-                                  backgroundColor: 'error.light',
-                                  borderColor: 'error.dark',
-                                  color: 'error.contrastText',
-                                },
-                              }}
-                            >
-                              {deletingUser === user.id ? 'Deleting...' : 'Delete'}
-                            </StyledButton>
-                          </Box>
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={deletingUser === user.id}
+                            sx={{ 
+                              minWidth: '80px',
+                              borderColor: 'error.main',
+                              color: 'error.main',
+                              '&:hover': {
+                                backgroundColor: 'error.light',
+                                borderColor: 'error.dark',
+                                color: 'error.contrastText',
+                              },
+                            }}
+                          >
+                            {deletingUser === user.id ? 'Deleting...' : 'Delete'}
+                          </StyledButton>
                         </TableCell>
                       </TableRow>
                     ))
