@@ -44,7 +44,9 @@ interface Session {
   } | null;
   categories: string[];
   newImage?: File;
+  newAudioPlayerImage?: File;
   imageUrl?: string;
+  audioPlayerImageUrl?: string;
   subCategories: SessionSubCategory[];
   activated: boolean;
   highlighted: boolean;
@@ -650,6 +652,11 @@ const Content: React.FC = () => {
     // Add new image if it exists
     if (selectedSession.newImage instanceof File) {
       formData.append('image', selectedSession.newImage);
+    }
+
+    // Add new audio player image if it exists
+    if (selectedSession.newAudioPlayerImage instanceof File) {
+      formData.append('audioPlayerImage', selectedSession.newAudioPlayerImage);
     }
 
     const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/update/${selectedSession.id}`, {
@@ -1721,51 +1728,105 @@ const Content: React.FC = () => {
                     </>
                   )}
                   {isEditing && (
-                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                      {selectedSession?.imageUrl && (
-                        <Box>
-                          <Typography variant="body2" sx={{ mb: 1 }}>Current Image:</Typography>
-                          <img 
-                            src={selectedSession?.imageUrl} 
-                            alt="Current session" 
-                            style={{ 
-                              maxWidth: '100px', 
-                              height: 'auto', 
-                              borderRadius: '4px' 
-                            }} 
-                          />
-                        </Box>
-                      )}
-                      <Box>
-                        <input
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                          id="edit-image-upload"
-                          type="file"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setSelectedSession(prev => ({
-                                ...prev!,
-                                newImage: file
-                              }));
-                            }
-                          }}
-                        />
-                        <label htmlFor="edit-image-upload">
-                          <StyledButton
-                            variant="outlined"
-                            component="span"
-                            startIcon={<CloudUpload />}
-                          >
-                            Upload New Image
-                          </StyledButton>
-                        </label>
-                        {selectedSession.newImage && (
-                          <Typography variant="body2" sx={{ mt: 1 }}>
-                            New image selected: {selectedSession.newImage.name}
-                          </Typography>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>Images</Typography>
+                      
+                      {/* Main Image Section */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        {selectedSession?.imageUrl && (
+                          <Box>
+                            <Typography variant="body2" sx={{ mb: 1 }}>Current Main Image:</Typography>
+                            <img 
+                              src={selectedSession?.imageUrl} 
+                              alt="Current session" 
+                              style={{ 
+                                maxWidth: '100px', 
+                                height: 'auto', 
+                                borderRadius: '4px' 
+                              }} 
+                            />
+                          </Box>
                         )}
+                        <Box>
+                          <input
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            id="edit-image-upload"
+                            type="file"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSelectedSession(prev => ({
+                                  ...prev!,
+                                  newImage: file
+                                }));
+                              }
+                            }}
+                          />
+                          <label htmlFor="edit-image-upload">
+                            <StyledButton
+                              variant="outlined"
+                              component="span"
+                              startIcon={<CloudUpload />}
+                            >
+                              Upload New Main Image
+                            </StyledButton>
+                          </label>
+                          {selectedSession.newImage && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              New main image selected: {selectedSession.newImage.name}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* Audio Player Image Section */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {selectedSession?.audioPlayerImageUrl && (
+                          <Box>
+                            <Typography variant="body2" sx={{ mb: 1 }}>Current Audio Player Image:</Typography>
+                            <img 
+                              src={selectedSession?.audioPlayerImageUrl} 
+                              alt="Current audio player" 
+                              style={{ 
+                                maxWidth: '100px', 
+                                height: 'auto', 
+                                borderRadius: '4px' 
+                              }} 
+                            />
+                          </Box>
+                        )}
+                        <Box>
+                          <input
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            id="edit-audio-player-image-upload"
+                            type="file"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSelectedSession(prev => ({
+                                  ...prev!,
+                                  newAudioPlayerImage: file
+                                }));
+                              }
+                            }}
+                          />
+                          <label htmlFor="edit-audio-player-image-upload">
+                            <StyledButton
+                              variant="outlined"
+                              component="span"
+                              startIcon={<CloudUpload />}
+                            >
+                              Upload New Audio Player Image
+                            </StyledButton>
+                          </label>
+                          {selectedSession.newAudioPlayerImage && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              New audio player image selected: {selectedSession.newAudioPlayerImage.name}
+                            </Typography>
+                          )}
+                        </Box>
                       </Box>
                     </Box>
                   )}
@@ -1813,6 +1874,43 @@ const Content: React.FC = () => {
                   <Typography variant="body2" sx={{ mb: 2 }}>
                     Highlighted: {selectedSession.highlighted ? "Yes" : "No"}
                   </Typography>
+                  
+                  {/* Display images if they exist */}
+                  {(selectedSession.imageUrl || selectedSession.audioPlayerImageUrl) && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>Images</Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        {selectedSession.imageUrl && (
+                          <Box>
+                            <Typography variant="body2" sx={{ mb: 1 }}>Main Image:</Typography>
+                            <img 
+                              src={selectedSession.imageUrl} 
+                              alt="Session main" 
+                              style={{ 
+                                maxWidth: '150px', 
+                                height: 'auto', 
+                                borderRadius: '4px' 
+                              }} 
+                            />
+                          </Box>
+                        )}
+                        {selectedSession.audioPlayerImageUrl && (
+                          <Box>
+                            <Typography variant="body2" sx={{ mb: 1 }}>Audio Player Image:</Typography>
+                            <img 
+                              src={selectedSession.audioPlayerImageUrl} 
+                              alt="Audio player" 
+                              style={{ 
+                                maxWidth: '150px', 
+                                height: 'auto', 
+                                borderRadius: '4px' 
+                              }} 
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
                 </>
               )}
             </DialogContent>
