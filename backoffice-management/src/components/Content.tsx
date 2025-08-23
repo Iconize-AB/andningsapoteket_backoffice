@@ -69,6 +69,7 @@ interface Session {
   };
   conditionCategory?: string;
   sessionEndDuration: number;
+  authorId?: string;
 }
 
 interface NewSession {
@@ -83,7 +84,7 @@ interface NewSession {
   activated: boolean;
   startQuestion: Question | null;
   endQuestion: Question | null;
-  author: string;
+  authorId: string;
   type: 'journey' | 'condition';
   isStressedQuestion: boolean;
   startQuestionRanges: {
@@ -107,6 +108,8 @@ interface NewSession {
   conditionCategory?: string;
   audioPlayerImage: File | null;
 }
+
+
 
 interface ExtendedButtonProps {
   component?: React.ElementType;
@@ -289,7 +292,7 @@ const Content: React.FC = () => {
     activated: true,
     startQuestion: null,
     endQuestion: null,
-    author: '',
+    authorId: '',
     type: 'journey',
     isStressedQuestion: false,
     startQuestionRanges: {
@@ -327,6 +330,7 @@ const Content: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'journey' | 'condition'>('all');
   const [filterActivated, setFilterActivated] = useState<'all' | 'active' | 'inactive'>('all');
+
 
   const languageOptions = [
     { value: 'sv', label: 'Swedish' },
@@ -438,6 +442,8 @@ const Content: React.FC = () => {
     }
   };
 
+
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = event.target;
     setNewSession(prev => ({ ...prev, [name]: type === 'checkbox' ? (event.target as HTMLInputElement).checked : value }));
@@ -459,7 +465,7 @@ const Content: React.FC = () => {
       formData.append('description', newSession.description);
       formData.append('type', newSession.type);
       formData.append('activated', String(newSession.activated));
-      formData.append('author', newSession.author);
+      formData.append('authorId', newSession.authorId);
       formData.append('language', newSession.language);
       formData.append('sessionEndDuration', String(newSession.sessionEndDuration));
       // Add category or subcategory based on type
@@ -546,7 +552,7 @@ const Content: React.FC = () => {
         activated: true, 
         startQuestion: null,
         endQuestion: null,
-        author: '',
+        authorId: '',
         type: 'journey',
         isStressedQuestion: false,
         startQuestionRanges: {
@@ -634,6 +640,7 @@ const Content: React.FC = () => {
       highlighted: selectedSession.highlighted,
       conditionCategory: selectedSession.type === 'condition' ? selectedSession.conditionCategory : null,
       sessionEndDuration: selectedSession.sessionEndDuration,
+      authorId: selectedSession.authorId || null,
       ...(selectedSession.type === 'condition' && {
         startQuestion: selectedSession.startQuestion?.question,
         endQuestion: selectedSession.endQuestion?.question,
@@ -1402,11 +1409,12 @@ const Content: React.FC = () => {
                 <Grid item xs={12}>
                   <StyledTextField
                     fullWidth
-                    label="Author"
-                    name="author"
-                    value={newSession.author}
+                    label="Author ID"
+                    name="authorId"
+                    value={newSession.authorId}
                     onChange={handleInputChange}
                     required
+                    helperText="Enter the author ID for this session"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -1451,6 +1459,8 @@ const Content: React.FC = () => {
               </Grid>
             </form>
           )}
+
+
         </CardContent>
       </StyledCard>
 
@@ -1618,6 +1628,15 @@ const Content: React.FC = () => {
                       <MenuItem value="false">No</MenuItem>
                     </StyledSelect>
                   </FormControl>
+                  
+                  <StyledTextField
+                    fullWidth
+                    label="Author ID"
+                    value={selectedSession.authorId || ''}
+                    onChange={(e) => setSelectedSession({ ...selectedSession, authorId: e.target.value })}
+                    margin="normal"
+                    helperText="Enter the author ID for this session"
+                  />
                   {selectedSession.type === 'condition' && (
                     <>
                       <Box sx={{ mt: 3, mb: 2, p: 2, bgcolor: 'background.paper', border: '1px solid' }}>
@@ -1962,6 +1981,8 @@ const Content: React.FC = () => {
           </StyledButton>
         </DialogActions>
       </Dialog>
+
+
     </Box>
   );
 };

@@ -14,6 +14,7 @@ import SixDayChallenges from './components/SixDayChallenges';
 import SubCategories from './components/SubCategories';
 import Organizations from './components/Organizations';
 import HomeScreenVideos from './components/HomeScreenVideos';
+import Authors from './components/Authors';
 
 const theme = createTheme({
   palette: {
@@ -62,6 +63,7 @@ const App: React.FC = () => {
                 <Route path="/journeys" element={<Content />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/subcategories" element={<SubCategories />} />
+                <Route path="/authors" element={<Authors />} />
                 <Route path="/challenges" element={<Challenges />} />
                 <Route path="/sixday" element={<SixDayChallenges />} />
                 <Route path="/homescreen-videos" element={<HomeScreenVideos />} />
