@@ -24,3 +24,4 @@ console.log('\n=== Forced Production ===');
 console.log('Logs (forced production):', getApiUrlForEndpoint('/v1/logs', true));
 
 export {};
+

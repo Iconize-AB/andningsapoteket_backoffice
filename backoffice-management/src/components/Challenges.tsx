@@ -318,7 +318,7 @@ const SessionSelector: React.FC<SessionSelectorProps> = ({
       if (!token) throw new Error("No authentication token found");
 
       const response = await fetch(
-        "https://prodandningsapoteketbackoffice.online/v1/backoffice/sessions/all",
+        getApiUrlForEndpoint('/v1/backoffice/sessions/all'),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -604,8 +604,8 @@ const Challenges: React.FC = () => {
       }
 
       const url = isEditing && editingChallenge
-        ? `https://prodandningsapoteketbackoffice.online/v1/challenges/update/${editingChallenge.id}`
-        : "https://prodandningsapoteketbackoffice.online/v1/challenges/create";
+        ? getApiUrlForEndpoint(`/v1/challenges/update/${editingChallenge.id}`)
+        : getApiUrlForEndpoint("/v1/challenges/create");
 
       console.log("Form data being sent:", {
         title: formData.get('title'),
@@ -687,7 +687,7 @@ const Challenges: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://prodandningsapoteketbackoffice.online/v1/challenges/delete/${challengeId}`,
+        getApiUrlForEndpoint(`/v1/challenges/delete/${challengeId}`),
         {
           method: "DELETE",
           headers: {
@@ -732,7 +732,7 @@ const Challenges: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://prodandningsapoteketbackoffice.online/v1/challenges/session/delete/${sessionId}`,
+        getApiUrlForEndpoint(`/v1/challenges/session/delete/${sessionId}`),
         {
           method: "DELETE",
           headers: {
@@ -799,7 +799,7 @@ const Challenges: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://prodandningsapoteketbackoffice.online/v1/challenges/toggle-activation/${challengeId}`,
+        getApiUrlForEndpoint(`/v1/challenges/toggle-activation/${challengeId}`),
         {
           method: "PATCH",
           headers: {
@@ -872,7 +872,7 @@ const Challenges: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://prodandningsapoteketbackoffice.online/v1/challenges/highlighted/${challengeId}`,
+        getApiUrlForEndpoint(`/v1/challenges/highlighted/${challengeId}`),
         {
           method: "PATCH",
           headers: {

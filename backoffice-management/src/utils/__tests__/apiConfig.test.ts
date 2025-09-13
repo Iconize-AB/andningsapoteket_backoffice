@@ -2,7 +2,7 @@
  * Tests for API configuration utility
  */
 
-import { getApiUrl, getApiUrlForEndpoint, getLegacyProductionApiUrl, getProductionApiUrl } from '../apiConfig';
+import { getApiUrl, getApiUrlForEndpoint, getProductionApiUrl } from '../apiConfig';
 
 // Mock process.env and window.location for testing
 const mockProcessEnv = (env: any) => {
@@ -65,8 +65,8 @@ describe('API Configuration', () => {
       const restoreEnv = mockProcessEnv({ NODE_ENV: 'development' });
       const restoreLocation = mockWindowLocation('localhost');
       
-      expect(getApiUrlForEndpoint('/v1/user/signin')).toBe('https://prodandningsapoteketbackoffice.online/v1/user/signin');
-      expect(getApiUrlForEndpoint('/v1/backoffice/users/all')).toBe('https://prodandningsapoteketbackoffice.online/v1/backoffice/users/all');
+      expect(getApiUrlForEndpoint('/v1/user/signin')).toBe('https://api.wehale.io/v1/user/signin');
+      expect(getApiUrlForEndpoint('/v1/backoffice/users/all')).toBe('https://api.wehale.io/v1/backoffice/users/all');
       
       restoreEnv();
       restoreLocation();
@@ -87,18 +87,13 @@ describe('API Configuration', () => {
       const restoreEnv = mockProcessEnv({ NODE_ENV: 'development' });
       const restoreLocation = mockWindowLocation('localhost');
       
-      expect(getApiUrlForEndpoint('/v1/logs', true)).toBe('https://prodandningsapoteketbackoffice.online/v1/logs');
+      expect(getApiUrlForEndpoint('/v1/logs', true)).toBe('https://api.wehale.io/v1/logs');
       
       restoreEnv();
       restoreLocation();
     });
   });
 
-  describe('getLegacyProductionApiUrl', () => {
-    it('should return legacy production URL', () => {
-      expect(getLegacyProductionApiUrl('/v1/test')).toBe('https://prodandningsapoteketbackoffice.online/v1/test');
-    });
-  });
 
   describe('getProductionApiUrl', () => {
     it('should return new production URL', () => {
@@ -106,3 +101,4 @@ describe('API Configuration', () => {
     });
   });
 });
+

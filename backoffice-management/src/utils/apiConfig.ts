@@ -7,7 +7,7 @@ const isLocalDevelopment = process.env.NODE_ENV === 'development' ||
   window.location.hostname === '127.0.0.1';
 
 export const API_BASE_URL = isLocalDevelopment 
-  ? 'http://localhost:3000' 
+  ? 'http://localhost:3000'
   : 'https://api.wehale.io';
 
 /**
@@ -32,16 +32,6 @@ export const getProductionApiUrl = (endpoint: string): string => {
   return `https://api.wehale.io${normalizedEndpoint}`;
 };
 
-/**
- * Get the legacy production API URL for a given endpoint
- * This is used for specific cases where we need to use the old production URL
- * @param endpoint - The API endpoint
- * @returns The complete legacy production URL
- */
-export const getLegacyProductionApiUrl = (endpoint: string): string => {
-  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `https://prodandningsapoteketbackoffice.online${normalizedEndpoint}`;
-};
 
 /**
  * Get the appropriate API URL based on the endpoint type
@@ -69,7 +59,7 @@ export const getApiUrlForEndpoint = (endpoint: string, forceProduction: boolean 
     productionOnlyEndpoints.some(prodEndpoint => endpoint.includes(prodEndpoint));
 
   if (shouldUseProduction) {
-    return getLegacyProductionApiUrl(endpoint);
+    return getProductionApiUrl(endpoint);
   }
 
   return getApiUrl(endpoint);
@@ -79,7 +69,6 @@ const apiConfig = {
   API_BASE_URL,
   getApiUrl,
   getProductionApiUrl,
-  getLegacyProductionApiUrl,
 };
 
 export default apiConfig;

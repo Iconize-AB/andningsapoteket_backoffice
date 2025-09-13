@@ -304,8 +304,8 @@ const SixDayChallenges: React.FC = () => {
       ));
 
       const url = isEditing && editingChallenge
-        ? `https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/update/${editingChallenge.id}`
-        : 'https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/create';
+        ? getApiUrlForEndpoint(`/v1/challenges/sixday/update/${editingChallenge.id}`)
+        : getApiUrlForEndpoint('/v1/challenges/sixday/create');
 
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
