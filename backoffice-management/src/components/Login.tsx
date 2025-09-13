@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, Button, Card, CardContent, Typography, Alert } from '@mui/material';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 interface LoginProps {
   onLogin: (token: string) => void;
@@ -15,7 +16,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/user/signin', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/user/signin'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

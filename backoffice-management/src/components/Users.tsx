@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 import CircularProgress from '@mui/material/CircularProgress';
 
 interface User {
@@ -220,7 +221,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/create-user', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/create-user'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -268,7 +269,7 @@ const Users: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/users/delete/${userToDelete.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/users/delete/${userToDelete.id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -311,7 +312,7 @@ const Users: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/users/all', {
+        const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/users/all'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

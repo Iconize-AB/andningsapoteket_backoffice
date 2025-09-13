@@ -9,6 +9,7 @@ import {
   Grid,
   styled
 } from '@mui/material';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 interface Statistics {
   totalUsers: number;
@@ -54,7 +55,7 @@ const Dashboard: React.FC = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/statistics/user-stats', {
+        const response = await fetch(getApiUrlForEndpoint('/v1/statistics/user-stats'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

@@ -23,6 +23,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { ButtonProps } from '@mui/material/Button';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 // Reuse styled components from Challenges.tsx
 const PageBackground = styled(Box)(({ theme }) => ({
@@ -190,7 +191,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/all', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/challenges/sixday/all'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -338,7 +339,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/delete/${challengeId}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/challenges/sixday/delete/${challengeId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -367,7 +368,7 @@ const SixDayChallenges: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/challenges/sixday/session/delete/${sessionId}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/challenges/sixday/session/delete/${sessionId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

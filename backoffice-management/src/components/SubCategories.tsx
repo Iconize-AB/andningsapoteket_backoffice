@@ -15,6 +15,7 @@ import {
   MenuItem
 } from '@mui/material';
 import { CloudUpload, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 interface SubCategory {
   id: string;
@@ -72,7 +73,7 @@ const SubCategories: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/sub-categories', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/sub-categories'), {
         mode: 'cors',
         credentials: 'omit',
         headers: {
@@ -108,7 +109,7 @@ const SubCategories: React.FC = () => {
         formData.append('image', selectedImage);
       }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/create', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/subcategories/create'), {
         method: 'POST',
         mode: 'cors',
         credentials: 'omit',
@@ -168,7 +169,7 @@ const SubCategories: React.FC = () => {
         formData.append('image', editImage);
       }
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/update/${editingSubCategory.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/subcategories/update/${editingSubCategory.id}`), {
         method: 'PUT',
         mode: 'cors',
         credentials: 'omit',
@@ -208,7 +209,7 @@ const SubCategories: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/subcategories/${deletingSubCategory.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/subcategories/${deletingSubCategory.id}`), {
         method: 'DELETE',
         mode: 'cors',
         credentials: 'omit',

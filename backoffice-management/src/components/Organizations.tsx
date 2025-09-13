@@ -28,6 +28,7 @@ import {
 import { styled } from '@mui/material/styles';
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface User {
@@ -173,7 +174,7 @@ const Organizations: React.FC = () => {
           const token = localStorage.getItem('userToken');
           if (!token) throw new Error('No authentication token found');
   
-          const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/users/all', {
+          const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/users/all'), {
             headers: { 'Authorization': `Bearer ${token}` },
           });
   
@@ -201,7 +202,7 @@ const Organizations: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/create', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/organizations/organizations/create'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -233,7 +234,7 @@ const Organizations: React.FC = () => {
       if (!token) throw new Error('No authentication token found');
   
       // Update organization details
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/organizations/organizations/${selectedOrg.id}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -305,7 +306,7 @@ const Organizations: React.FC = () => {
       if (!token) throw new Error('No authentication token found');
 
       // Single request with all users
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/organizations/organizations/${selectedOrg.id}/users/bulk`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/organizations/organizations/${selectedOrg.id}/users/bulk`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -325,7 +326,7 @@ const Organizations: React.FC = () => {
       setUploadProgress(100);
 
       // Refresh available users after bulk upload
-      const usersResponse = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/users', {
+      const usersResponse = await fetch(getApiUrlForEndpoint('/v1/backoffice/users'), {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       
@@ -349,7 +350,7 @@ const Organizations: React.FC = () => {
         const token = localStorage.getItem('userToken');
         if (!token) throw new Error('No authentication token found');
 
-        const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/organizations/organizations', {
+        const response = await fetch(getApiUrlForEndpoint('/v1/organizations/organizations'), {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 

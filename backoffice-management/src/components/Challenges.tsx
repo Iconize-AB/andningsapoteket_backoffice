@@ -28,6 +28,7 @@ import { styled } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { ButtonProps } from "@mui/material/Button";
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { SessionForm } from "../types/sessions";
@@ -410,7 +411,7 @@ const Challenges: React.FC = () => {
       const token = localStorage.getItem("userToken");
       if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch("https://prodandningsapoteketbackoffice.online/v1/challenges/all", {
+      const response = await fetch(getApiUrlForEndpoint("/v1/challenges/all"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

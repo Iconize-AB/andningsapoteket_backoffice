@@ -21,6 +21,7 @@ import {
   DialogContentText
 } from '@mui/material';
 import { CloudUpload, Add, Delete, Edit, Save, Cancel } from '@mui/icons-material';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 interface VideoConfig {
   id: string;
@@ -91,7 +92,7 @@ const HomeScreenVideos: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/homescreen/videos'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -133,7 +134,7 @@ const HomeScreenVideos: React.FC = () => {
       formData.append('gradientLocation3', gradientLocation3);
       formData.append('topPadding', topPadding.toString());
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos/create', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/homescreen/videos/create'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -170,7 +171,7 @@ const HomeScreenVideos: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos/${deletingVideo.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/homescreen/videos/${deletingVideo.id}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -297,7 +298,7 @@ const HomeScreenVideos: React.FC = () => {
       // Always append topPadding
       formData.append('topPadding', topPadding.toString());
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/homescreen/videos/${editingVideo.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/homescreen/videos/${editingVideo.id}`), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

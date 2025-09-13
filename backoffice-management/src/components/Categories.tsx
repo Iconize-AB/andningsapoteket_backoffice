@@ -15,6 +15,7 @@ import {
   MenuItem
 } from '@mui/material';
 import { CloudUpload, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
+import { getApiUrlForEndpoint } from '../utils/apiConfig';
 
 interface Category {
   id: string;
@@ -68,7 +69,7 @@ const Categories: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/categories', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/categories'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -101,7 +102,7 @@ const Categories: React.FC = () => {
         formData.append('image', selectedImage);
       }
 
-      const response = await fetch('https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/create', {
+      const response = await fetch(getApiUrlForEndpoint('/v1/backoffice/categories/create'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -157,7 +158,7 @@ const Categories: React.FC = () => {
         formData.append('image', editImage);
       }
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/update/${editingCategory.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/categories/update/${editingCategory.id}`), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -196,7 +197,7 @@ const Categories: React.FC = () => {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`https://prodandningsapoteketbackoffice.online/v1/backoffice/categories/${deletingCategory.id}`, {
+      const response = await fetch(getApiUrlForEndpoint(`/v1/backoffice/categories/${deletingCategory.id}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
